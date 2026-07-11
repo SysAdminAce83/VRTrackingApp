@@ -1,0 +1,136 @@
+# Prompt for Agentic AI to Develop the WebApp
+
+## Summary
+You are a senior full-stack architect and developer. Design and build a secure, production-ready web application that runs on Microsoft IIS and is used for vulnerability assessment and remediation tracking based on Nessus scan reports. Nessus reports may be uploaded in CSV or PDF format, and the application must parse the uploaded report, extract vulnerability data, and present it in a structured web interface for remediation workflow tracking. Nessus exports commonly include CSV and PDF formats, and CSV is especially useful for downstream analysis and import into other tools.
+
+## Business Objective
+Build a centralized web app that helps security and infrastructure teams track monthly, Patch Tuesday, Zero Day, and risk-based remediation activity across servers and other assets. The system must allow teams to identify findings from Nessus reports, assign remediation status, and document exceptions where a fix is not applied. File upload handling must be implemented securely because upload features are a common attack surface and should be validated carefully.
+
+## Core Requirements
+- Support upload of Nessus scan reports in CSV and PDF formats.
+- Parse uploaded data and normalize it into a structured model.
+- Display the following host-level fields on the web page:
+  - Hostname
+  - IP Address
+  - Operating System
+  - Scan Date
+- Display vulnerability-level fields for each host:
+  - Vulnerability ID
+  - Description
+  - Synopsis
+  - Description (duplicate entry kept as per original)
+  - Solution
+  - Risk Factor
+  - CVSS v3.0 Base Score
+  - CVSS v3.0 Temporal Score
+  - VPR Score
+  - EPSS Score
+  - CVSS v2.0 Base Score
+  - CVSS v2.0 Temporal Score
+  - STIG Severity
+  - References
+  - Plugin Output
+- For each vulnerability ID, allow the user to mark the item as:
+  - Fixed
+  - Required Exception
+  - Open / Pending Remediation
+- Provide filtering, sorting, search, and export of tracked records.
+- Keep audit history for upload, status changes, comments, and exception approvals.
+
+## Functional Expectations
+- When a scan report is uploaded, the app should extract all host and vulnerability records and store them in a database.
+- The user should be able to view one scan, one host, or one vulnerability ID at a time.
+- The UI should show remediation progress by scan, by host, and by vulnerability severity.
+- The system should support multiple scans over time so teams can compare remediation progress between cycles.
+- The system should allow importing the same vulnerability ID from different scans and preserve historical changes.
+
+## Recommended Solution Design
+- Build the app using:
+  - ASP.NET Core for the web application layer
+  - IIS as the hosting platform
+  - SQL Server as the database
+  - Background processing for file parsing and normalization
+  - Role-based access control for administrators, reviewers, and remediation owners
+  - Audit logging for uploads, approvals, and status updates
+- **Data Model**
+  - Create entities such as:
+    - ScanUpload
+    - AssetHost
+    - VulnerabilityFinding
+    - VulnerabilityInstance
+    - RemediationAction
+    - ExceptionRecord
+    - UploadAuditTrail
+    - UserAccount / Role
+  - Each vulnerability instance should store the raw imported values plus normalized fields for reporting and filtering.
+- **UI Requirements**
+  - Design a clean enterprise dashboard with:
+    - Upload page
+    - Scan summary page
+    - Host summary page
+    - Vulnerability detail page
+    - Remediation status page
+    - Exception management page
+    - Reporting/export page
+- **Parsing Rules**
+  - For CSV, map columns dynamically and validate required fields.
+  - For PDF, extract text and structured data as reliably as possible.
+  - If fields are missing, show them as “Unavailable” rather than failing the import.
+  - Store the original imported file for traceability if policy permits.
+  - Validate uploaded files for type, size, and integrity before processing.
+- **Security Requirements**
+  - Secure file upload validation.
+  - Antivirus or content scanning before processing.
+  - Authentication and authorization.
+  - Input validation and output encoding.
+  - Anti-forgery protection.
+  - Logging and alerting for failed uploads and suspicious activity.
+  - Restrict upload size and file types.
+  - Prevent path traversal, script injection, and unsafe file execution.
+- **Reporting Requirements**
+  - Generate reports by:
+    - Month
+    - Patch Tuesday cycle
+    - Zero Day event
+    - Risk-based severity
+    - Hostname/IP
+    - Vulnerability ID
+    - Remediation status
+    - Exception status
+  - Include export options such as CSV and PDF for management review.
+- **Acceptance Criteria**
+  - The application is complete when:
+    - A user can upload a Nessus CSV or PDF report successfully.
+    - The app parses and displays host and vulnerability details.
+    - The app supports remediation tracking per vulnerability ID.
+    - The user can mark a finding as fixed or exception.
+    - The app preserves scan history and audit trails.
+    - The app runs successfully under IIS.
+    - The app is secure, stable, and ready for enterprise use.
+- **Deliverables**
+  - Produce the following:
+    - System architecture diagram.
+    - Database schema.
+    - Page-by-page UI wireframe.
+    - API design.
+    - Source code.
+    - Deployment steps for IIS.
+    - Test plan.
+    - Sample data import mapping for Nessus CSV and PDF.
+    - Security checklist.
+    - A short admin guide.
+- **Implementation Guidance**
+  - Use a layered architecture: presentation, application services, domain model, and infrastructure.
+  - Separate parsing logic from UI logic.
+  - Use asynchronous processing for large uploads.
+  - Include pagination for large datasets.
+  - Make the system extensible for future integration with ticketing systems such as ServiceNow or Jira.
+  - Ensure the solution can scale to thousands of vulnerabilities and multiple monthly scans.
+  - Build this as a professional enterprise-grade application with strong usability, auditability, and security.
+- **Extra Instruction to the Agent**
+  - Before coding, first produce:
+    - A concise architecture proposal,
+    - A normalized database schema,
+    - A list of assumptions about Nessus CSV/PDF input,
+    - and a phased implementation plan.
+  - Then generate the application incrementally, starting with the upload workflow, parsing pipeline, database schema, and core dashboard.

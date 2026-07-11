@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/VRTrackingApp.Data/VRTrackingApp.Data.csproj" />
+  </Folder>
+  <Project Path="VRTrackingApp.API/VRTrackingApp.API.csproj" />
+  <Project Path="VRTrackingApp.Domain/VRTrackingApp.Domain.csproj" />
+  <Project Path="VRTrackingApp.Infrastructure/VRTrackingApp.Infrastructure.csproj" />
+  <Project Path="VRTrackingApp.Tests/VRTrackingApp.Tests.csproj" />
+  <Project Path="VRTrackingApp.Web/VRTrackingApp.Web.csproj" />
+</Solution>

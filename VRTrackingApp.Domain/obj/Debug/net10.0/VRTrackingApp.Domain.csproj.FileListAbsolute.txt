@@ -1,0 +1,12 @@
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\bin\Debug\net10.0\VRTrackingApp.Domain.deps.json
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\bin\Debug\net10.0\VRTrackingApp.Domain.dll
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\bin\Debug\net10.0\VRTrackingApp.Domain.pdb
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\obj\Debug\net10.0\VRTrackingApp.Domain.csproj.AssemblyReference.cache
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\obj\Debug\net10.0\VRTrackingApp.Domain.GeneratedMSBuildEditorConfig.editorconfig
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\obj\Debug\net10.0\VRTrackingApp.Domain.AssemblyInfoInputs.cache
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\obj\Debug\net10.0\VRTrackingApp.Domain.AssemblyInfo.cs
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\obj\Debug\net10.0\VRTrackingApp.Domain.csproj.CoreCompileInputs.cache
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\obj\Debug\net10.0\VRTrackingApp.Domain.dll
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\obj\Debug\net10.0\refint\VRTrackingApp.Domain.dll
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\obj\Debug\net10.0\VRTrackingApp.Domain.pdb
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\obj\Debug\net10.0\ref\VRTrackingApp.Domain.dll

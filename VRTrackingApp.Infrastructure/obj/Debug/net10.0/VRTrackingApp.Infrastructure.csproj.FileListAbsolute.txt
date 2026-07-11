@@ -1,0 +1,15 @@
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\VRTrackingApp.Infrastructure.csproj.AssemblyReference.cache
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\VRTrackingApp.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\VRTrackingApp.Infrastructure.AssemblyInfoInputs.cache
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\VRTrackingApp.Infrastructure.AssemblyInfo.cs
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\VRTrackingApp.Infrastructure.csproj.CoreCompileInputs.cache
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\bin\Debug\net10.0\VRTrackingApp.Infrastructure.deps.json
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\bin\Debug\net10.0\VRTrackingApp.Infrastructure.dll
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\bin\Debug\net10.0\VRTrackingApp.Infrastructure.pdb
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\bin\Debug\net10.0\VRTrackingApp.Domain.dll
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\bin\Debug\net10.0\VRTrackingApp.Domain.pdb
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\VRTracki.62928141.Up2Date
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\VRTrackingApp.Infrastructure.dll
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\refint\VRTrackingApp.Infrastructure.dll
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\VRTrackingApp.Infrastructure.pdb
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\ref\VRTrackingApp.Infrastructure.dll
