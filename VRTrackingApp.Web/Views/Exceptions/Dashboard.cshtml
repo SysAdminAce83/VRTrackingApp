@@ -1,0 +1,124 @@
+@model IEnumerable<VRTrackingApp.Data.Models.ExceptionRecord>
+@using VRTrackingApp.Data.Models
+@{
+    var k = (VRTrackingApp.Web.Controllers.ExceptionsController.ExceptionKpis)ViewBag.Kpis;
+    var trend = (List<VRTrackingApp.Web.Controllers.ExceptionsController.TrendPoint>)ViewBag.Trend;
+    var byReason = (List<VRTrackingApp.Web.Controllers.ExceptionsController.NameCount>)ViewBag.ByReason;
+    var byOwner = (List<VRTrackingApp.Web.Controllers.ExceptionsController.NameCount>)ViewBag.ByOwner;
+    var byBu = (List<VRTrackingApp.Web.Controllers.ExceptionsController.NameCount>)ViewBag.ByBu;
+
+    int MaxOf(List<VRTrackingApp.Web.Controllers.ExceptionsController.NameCount> list) =>
+        list.Count == 0 ? 1 : list.Max(x => x.Count);
+    int Pct(int v, int max) => max == 0 ? 0 : (int)Math.Round(100.0 * v / max);
+}
+
+<div class="page-head">
+    <div>
+        <h1>Exception Dashboard</h1>
+        <p class="page-sub">Exception portfolio — KPIs, trends and breakdowns</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary btn-sm" asp-action="Index">▦ Register</a>
+        <a class="btn btn-primary btn-sm" asp-action="ExportCsv">⤓ Export CSV</a>
+    </div>
+</div>
+
+<!-- KPI tiles -->
+<div class="kpi-row mb-3">
+    <div class="kpi-card kpi-info"><div class="kpi-val">@k.Total</div><div class="kpi-lbl">Total</div></div>
+    <div class="kpi-card kpi-ok"><div class="kpi-val">@k.Active</div><div class="kpi-lbl">Active</div></div>
+    <div class="kpi-card kpi-warn"><div class="kpi-val">@k.Pending</div><div class="kpi-lbl">Pending</div></div>
+    <div class="kpi-card kpi-danger"><div class="kpi-val">@k.Critical</div><div class="kpi-lbl">Critical</div></div>
+    <div class="kpi-card kpi-warn"><div class="kpi-val">@k.Expiring30</div><div class="kpi-lbl">Expiring &lt;30d</div></div>
+    <div class="kpi-card"><div class="kpi-val">@k.ReviewDue</div><div class="kpi-lbl">Review Due</div></div>
+    <div class="kpi-card kpi-danger"><div class="kpi-val">@k.Expired</div><div class="kpi-lbl">Expired</div></div>
+    <div class="kpi-card kpi-danger"><div class="kpi-val">@k.Rejected</div><div class="kpi-lbl">Rejected</div></div>
+    <div class="kpi-card"><div class="kpi-val">@k.Closed</div><div class="kpi-lbl">Closed</div></div>
+    <div class="kpi-card"><div class="kpi-val">@k.NeedInfo</div><div class="kpi-lbl">Need Info</div></div>
+    <div class="kpi-card"><div class="kpi-val">@k.MissingEvidence</div><div class="kpi-lbl">Missing Evidence</div></div>
+    <div class="kpi-card"><div class="kpi-val">@k.OverdueMitigation</div><div class="kpi-lbl">Overdue Mitig.</div></div>
+</div>
+
+<div class="dash-grid">
+    <div class="card">
+        <div class="card-h">
+            <span>Trend by status</span>
+            <span class="card-h-sub">exceptions created per month</span>
+        </div>
+        <div class="card-b">
+            @foreach (var t in trend)
+            {
+                var total = t.Active + t.Pending + t.Rejected + t.Expired + t.Closed;
+                <div class="bar-row">
+                    <div class="bar-label">@t.Month</div>
+                    <div class="bar-track">
+                        <div class="bar-seg Active" style="width:@Pct(t.Active,total)%" title="Active @t.Active"></div>
+                        <div class="bar-seg Pending" style="width:@Pct(t.Pending,total)%" title="Pending @t.Pending"></div>
+                        <div class="bar-seg Rejected" style="width:@Pct(t.Rejected,total)%" title="Rejected @t.Rejected"></div>
+                        <div class="bar-seg Expired" style="width:@Pct(t.Expired,total)%" title="Expired @t.Expired"></div>
+                        <div class="bar-seg Closed" style="width:@Pct(t.Closed,total)%" title="Closed @t.Closed"></div>
+                    </div>
+                    <div style="width:34px;text-align:right;font-size:12px;color:var(--muted)">@total</div>
+                </div>
+            }
+            @if (trend.Count == 0) { <div class="empty">No exceptions yet.</div> }
+            <ul class="legend mt-2">
+                <li><span class="dot" style="background:#16a34a"></span> Active</li>
+                <li><span class="dot" style="background:#eab308"></span> Pending / Info</li>
+                <li><span class="dot" style="background:#dc2626"></span> Rejected</li>
+                <li><span class="dot" style="background:#64748b"></span> Expired</li>
+                <li><span class="dot" style="background:#94a3b8"></span> Closed</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-h"><span>By reason (not fixable)</span></div>
+        <div class="card-b">
+            @{ var rmax = MaxOf(byReason); }
+            @foreach (var r in byReason)
+            {
+                <div class="hbar-row">
+                    <div class="hbar-label" title="@r.Label">@r.Label</div>
+                    <div class="hbar-track"><div class="hbar-fill Reason" style="width:@Pct(r.Count,rmax)%"></div></div>
+                    <div class="hbar-val">@r.Count</div>
+                </div>
+            }
+            @if (byReason.Count == 0) { <div class="empty">No reasons recorded.</div> }
+        </div>
+    </div>
+</div>
+
+<div class="dash-grid">
+    <div class="card">
+        <div class="card-h"><span>By owner</span></div>
+        <div class="card-b">
+            @{ var omax = MaxOf(byOwner); }
+            @foreach (var o in byOwner)
+            {
+                <div class="hbar-row">
+                    <div class="hbar-label" title="@o.Label">@o.Label</div>
+                    <div class="hbar-track"><div class="hbar-fill Owner" style="width:@Pct(o.Count,omax)%"></div></div>
+                    <div class="hbar-val">@o.Count</div>
+                </div>
+            }
+            @if (byOwner.Count == 0) { <div class="empty">No owners assigned.</div> }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-h"><span>By business unit</span></div>
+        <div class="card-b">
+            @{ var bmax = MaxOf(byBu); }
+            @foreach (var b in byBu)
+            {
+                <div class="hbar-row bu">
+                    <div class="hbar-label" title="@b.Label">@b.Label</div>
+                    <div class="hbar-track"><div class="hbar-fill Bu" style="width:@Pct(b.Count,bmax)%"></div></div>
+                    <div class="hbar-val">@b.Count</div>
+                </div>
+            }
+            @if (byBu.Count == 0) { <div class="empty">No business unit mapped.</div> }
+        </div>
+    </div>
+</div>

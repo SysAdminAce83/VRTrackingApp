@@ -1,0 +1,84 @@
+@model IEnumerable<VRTrackingApp.Web.Controllers.AssetController.AssetRow>
+
+<div class="page-head">
+    <div>
+        <h1>Assets</h1>
+        <p class="page-sub">Canonical asset inventory · de-duplicated across all scans · BIA &amp; DR/BC</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-primary" asp-action="Create">＋ Add device</a>
+        <a class="btn btn-outline-primary" asp-controller="Upload" asp-action="Index">⤓ Upload Scan</a>
+    </div>
+</div>
+
+<div class="kpi-grid">
+    <div class="kpi total"><span class="k-bar"></span><div class="k-label">Assets</div><div class="k-value">@ViewBag.Total</div></div>
+    <div class="kpi open"><span class="k-bar"></span><div class="k-label">Open findings</div><div class="k-value">@ViewBag.OpenCount</div></div>
+    <div class="kpi crit"><span class="k-bar"></span><div class="k-label">Crit (open)</div><div class="k-value">@Model.Sum(r => r.Critical)</div></div>
+    <div class="kpi high"><span class="k-bar"></span><div class="k-label">High (open)</div><div class="k-value">@Model.Sum(r => r.High)</div></div>
+</div>
+
+<form class="toolbar" asp-action="Index" method="get">
+    <input class="form-control" name="q" placeholder="Search hostname, IP, location, category…" value="@Context.Request.Query["q"]" />
+    <select class="form-select" name="category" onchange="this.form.submit()" title="Filter by category">
+        <option value="">All categories</option>
+        @foreach (var c in (List<string>)ViewBag.Categories)
+        { <option value="@c" selected="@(c == (string?)ViewBag.Category)">@c</option> }
+    </select>
+    <select class="form-select" name="datacenter" onchange="this.form.submit()" title="Filter by datacenter">
+        <option value="">All datacenters</option>
+        @foreach (var d in (List<string>)ViewBag.Datacenters)
+        { <option value="@d" selected="@(d == (string?)ViewBag.Datacenter)">@d</option> }
+    </select>
+    <select class="form-select" name="status" onchange="this.form.submit()" title="Filter by status">
+        <option value="">All statuses</option>
+        @foreach (var s in new[] { "Active", "Retired", "Maintenance", "Decommissioned" })
+        { <option value="@s" selected="@(s == (string?)ViewBag.Status)">@s</option> }
+    </select>
+    <button class="btn btn-outline-primary">Filter</button>
+</form>
+
+<div class="card">
+    <div class="card-h">Inventory (@ViewBag.Total)</div>
+    <div class="card-b p-0">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Hostname</th><th>IP</th><th>OS</th><th>Datacenter</th><th>Status</th>
+                    <th>Location</th><th>Category</th><th>Sub-category</th><th>Crit</th><th>High</th><th>Open</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    var a = r.Asset;
+                    <tr>
+                        <td><a asp-action="Details" asp-route-id="@a.Id">@a.HostName</a></td>
+                        <td>@a.IpAddress</td>
+                        <td class="text-muted">@(a.OperatingSystem ?? "—")</td>
+                        <td>@(a.Datacenter ?? "—")</td>
+                        <td>@(a.AssetStatus ?? "—")</td>
+                        <td>@(a.Location ?? "—")</td>
+                        <td>@(a.Category ?? "—")</td>
+                        <td class="text-muted">@(a.SubCategory ?? "—")</td>
+                        <td><span class="sev Critical">@r.Critical</span></td>
+                        <td><span class="sev High">@r.High</span></td>
+                        <td>@r.Open</td>
+                        <td class="text-nowrap">
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@a.Id">View</a>
+                            <form method="post" asp-action="Delete" asp-route-id="@a.Id" class="d-inline"
+                                  onsubmit="return confirm('Delete this asset?');">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-outline-danger" type="submit">Del</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="12" class="empty">No assets found. Upload a scan to populate the inventory.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

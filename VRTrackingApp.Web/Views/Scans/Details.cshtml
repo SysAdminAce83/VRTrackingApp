@@ -1,0 +1,130 @@
+@model VRTrackingApp.Data.Models.ScanUpload
+@{
+    var scan = (VRTrackingApp.Data.Models.ScanUpload)ViewBag.Scan;
+    var all = (List<VRTrackingApp.Data.Models.VulnerabilityInstance>)ViewBag.AllInstances;
+    var selected = (VRTrackingApp.Data.Models.AssetHost?)ViewBag.SelectedHost;
+}
+
+<div class="page-head">
+    <div>
+        <h1>@(scan.ScanCycleLabel ?? scan.FileName)</h1>
+        <p class="page-sub">
+            <span class="src-tag">@scan.SourceType</span>
+            @(scan.ScanDate?.ToString("yyyy-MM-dd") ?? "—") ·
+            @scan.FileName · <span class="pill @scan.Status">@scan.Status</span>
+        </p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index">← All scans</a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-b d-flex flex-wrap gap-2 align-items-center">
+        <form method="get" class="d-flex gap-2 flex-wrap align-items-center" asp-action="Details" asp-route-id="@scan.Id">
+            <input type="hidden" name="hostId" value="@(selected?.Id)" />
+            <select class="form-select form-select-sm" name="severity">
+                <option value="">All severities</option>
+                @foreach (var sv in new[] { "Critical", "High", "Medium", "Low", "Info" })
+                { <option value="@sv" selected="@(ViewBag.FilterSeverity == sv)">@sv</option> }
+            </select>
+            <select class="form-select form-select-sm" name="status">
+                <option value="">All statuses</option>
+                @foreach (var st in new[] { "Open", "Fixed", "Exception" })
+                { <option value="@st" selected="@(ViewBag.FilterStatus == st)">@st</option> }
+            </select>
+            <input class="form-control form-control-sm" name="q" placeholder="Search plugin / CVE / host" value="@ViewBag.FilterQ" style="width:220px" />
+            <button class="btn btn-sm btn-primary" type="submit">Apply</button>
+            <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@scan.Id">Reset</a>
+        </form>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <span class="text-muted small">Remediation</span>
+            <div class="progress" style="width:160px;height:10px"><div class="progress-bar bg-success" style="width:@ViewBag.RemediationProgress%"></div></div>
+            <b>@ViewBag.RemediationProgress%</b>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2" style="grid-template-columns: 320px 1fr;">
+    <div class="card">
+        <div class="card-h">Hosts (@scan.AssetHosts.Count)</div>
+        <div class="card-b p-0">
+            <div class="list-group list-group-flush">
+                @foreach (var h in scan.AssetHosts)
+                {
+                    var cnt = all.Count(i => i.AssetHostId == h.Id);
+                    <a class="list-group-item list-group-item-action d-flex justify-content-between @(selected?.Id == h.Id ? "active" : "")"
+                       asp-action="Details" asp-route-id="@scan.Id" asp-route-hostId="@h.Id">
+                        <span>
+                            <div style="font-weight:600">@h.HostName</div>
+                            <small class="text-muted">@h.IpAddress · @h.OperatingSystem</small>
+                        </span>
+                        <span class="badge bg-secondary rounded-pill">@cnt</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div>
+        @if (selected != null)
+        {
+            var hostInstances = all.Where(i => i.AssetHostId == selected.Id)
+                .GroupBy(i => i.VulnerabilityFinding!.Severity)
+                .ToDictionary(g => g.Key, g => g.Count());
+            <div class="card mb-3">
+                <div class="card-h">@selected.HostName — vulnerability summary</div>
+                <div class="card-b">
+                    <div class="mb-2"><b>IP:</b> @selected.IpAddress &nbsp; <b>OS:</b> @selected.OperatingSystem</div>
+                    <div>
+                        @foreach (var s in new[] { "Critical", "High", "Medium", "Low", "Info" })
+                        {
+                            if (hostInstances.ContainsKey(s))
+                            { <span class="sev @s" style="margin-right:6px">@s @hostInstances[s]</span> }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-h">Findings on @selected.HostName</div>
+                <div class="card-b p-0">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Sev</th><th>Plugin</th><th>Finding</th><th>Port</th><th>Status</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var i in all.Where(x => x.AssetHostId == selected.Id)
+                                .OrderByDescending(x => x.VulnerabilityFinding!.Severity))
+                            {
+                                <tr>
+                                    <td>@Html.Raw(VRTrackingApp.Web.Html.UiHelpers.Sev(i.VulnerabilityFinding!.Severity))</td>
+                                    <td>@i.VulnerabilityFinding.PluginId</td>
+                                    <td>@i.VulnerabilityFinding.PluginName</td>
+                                    <td>@(i.Port?.ToString() ?? "—")</td>
+                                    <td>@Html.Raw(VRTrackingApp.Web.Html.UiHelpers.Pill(i.Status))</td>
+                                    <td><a class="btn btn-sm btn-outline-primary" asp-controller="Vulnerabilities" asp-action="Details" asp-route-id="@i.Id">Open</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card"><div class="card-b empty">Select a host to view findings.</div></div>
+        }
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-h">Audit trail</div>
+    <div class="card-b">
+        <ul class="timeline">
+            @foreach (var t in scan.AuditTrail.OrderBy(t => t.PerformedAt))
+            {
+                <li>
+                    <div><b>@t.Action</b> — @t.PerformedBy?.DisplayName</div>
+                    <div class="t-when">@t.PerformedAt.ToString("yyyy-MM-dd HH:mm")</div>
+                </li>
+            }
+        </ul>
+    </div>
+</div>

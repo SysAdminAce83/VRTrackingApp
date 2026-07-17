@@ -1,0 +1,127 @@
+@{
+    var k = (VRTrackingApp.Web.Controllers.DashboardController.DasKpis)ViewBag.Kpis;
+    var cycles = (List<VRTrackingApp.Web.Controllers.DashboardController.CycleStat>)ViewBag.Cycles;
+    var sevDist = (Dictionary<string, int>)ViewBag.SevDist;
+    var recent = (List<VRTrackingApp.Data.Models.ScanUpload>)ViewBag.RecentScans;
+    var overdue = (List<VRTrackingApp.Data.Models.VulnerabilityInstance>)ViewBag.Overdue;
+    var expiring = (List<VRTrackingApp.Data.Models.ExceptionRecord>)ViewBag.Expiring;
+    var totalSev = sevDist.Values.Sum() == 0 ? 1 : sevDist.Values.Sum();
+}
+
+<div class="page-head">
+    <div>
+        <h1>Dashboard</h1>
+        <p class="page-sub">Vulnerability remediation progress across scan cycles</p>
+    </div>
+    <a class="btn btn-primary" asp-controller="Upload" asp-action="Index">⤓ Upload Scan</a>
+</div>
+
+<div class="kpi-grid">
+    <div class="kpi total"><span class="k-bar"></span><div class="k-label">Hosts</div><div class="k-value">@k.Hosts</div></div>
+    <div class="kpi total"><span class="k-bar"></span><div class="k-label">Findings</div><div class="k-value">@k.Findings</div></div>
+    <div class="kpi open"><span class="k-bar"></span><div class="k-label">Open</div><div class="k-value">@k.Open</div></div>
+    <div class="kpi fixed"><span class="k-bar"></span><div class="k-label">Fixed</div><div class="k-value">@k.Fixed</div></div>
+    <div class="kpi exc"><span class="k-bar"></span><div class="k-label">Exceptions</div><div class="k-value">@k.Exceptions</div></div>
+    <div class="kpi crit"><span class="k-bar"></span><div class="k-label">Crit / High</div><div class="k-value">@k.CritHigh</div></div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-h">Remediation progress by scan cycle</div>
+        <div class="card-b">
+            @foreach (var c in cycles)
+            {
+                var total = c.Open + c.Fixed + c.Exception;
+                var pOpen = total == 0 ? 0 : (int)(100.0 * c.Open / total);
+                var pFixed = total == 0 ? 0 : (int)(100.0 * c.Fixed / total);
+                var pExc = total == 0 ? 0 : (int)(100.0 * c.Exception / total);
+                <div class="bar-row">
+                    <div class="bar-label">@c.Label</div>
+                    <div class="bar-track">
+                        <div class="bar-seg Open" style="width:@pOpen%" title="Open @c.Open"></div>
+                        <div class="bar-seg Fixed" style="width:@pFixed%" title="Fixed @c.Fixed"></div>
+                        <div class="bar-seg Exception" style="width:@pExc%" title="Exception @c.Exception"></div>
+                    </div>
+                    <div style="width:54px;text-align:right;font-size:12px;color:#6b7686">@total</div>
+                </div>
+            }
+            @if (cycles.Count == 0)
+            { <div class="empty">No scan cycles yet.</div> }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-h">Severity distribution</div>
+        <div class="card-b">
+            <div class="donut-wrap">
+                <div class="donut" style="background:conic-gradient(
+                    var(--crit) 0 calc(100% * @(sevDist["Critical"])/@totalSev),
+                    var(--high) 0 calc(100% * @(sevDist["Critical"]+sevDist["High"])/@totalSev),
+                    var(--med) 0 calc(100% * @(sevDist["Critical"]+sevDist["High"]+sevDist["Medium"])/@totalSev),
+                    var(--low) 0 calc(100% * @(sevDist["Critical"]+sevDist["High"]+sevDist["Medium"]+sevDist["Low"])/@totalSev),
+                    var(--info) 0 100%)"></div>
+                <ul class="legend">
+                    <li><span class="dot" style="background:var(--crit)"></span> Critical <b>@sevDist["Critical"]</b></li>
+                    <li><span class="dot" style="background:var(--high)"></span> High <b>@sevDist["High"]</b></li>
+                    <li><span class="dot" style="background:var(--med)"></span> Medium <b>@sevDist["Medium"]</b></li>
+                    <li><span class="dot" style="background:var(--low)"></span> Low <b>@sevDist["Low"]</b></li>
+                    <li><span class="dot" style="background:var(--info)"></span> Info <b>@sevDist["Info"]</b></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2b">
+    <div class="card">
+        <div class="card-h">Recent scans</div>
+        <div class="card-b p-0">
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Cycle</th><th>Type</th><th>Date</th><th>Hosts</th><th>Status</th></tr></thead>
+                <tbody>
+                    @foreach (var s in recent)
+                    {
+                        <tr>
+                            <td><a asp-controller="Scans" asp-action="Details" asp-route-id="@s.Id">@s.ScanCycleLabel</a></td>
+                            <td><span class="src-tag">@s.SourceType</span></td>
+                            <td>@(s.ScanDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                            <td>@s.AssetHosts.Count</td>
+                            <td><span class="pill @s.Status">@s.Status</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-h">Overdue & expiring</div>
+        <div class="card-b p-0">
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Host</th><th>Finding</th><th>Due / Expires</th><th>State</th></tr></thead>
+                <tbody>
+                    @foreach (var i in overdue)
+                    {
+                        <tr>
+                            <td>@i.AssetHost?.HostName</td>
+                            <td>@i.VulnerabilityFinding?.PluginName</td>
+                            <td>@(i.DueDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                            <td><span class="pill @i.Status">@i.Status</span></td>
+                        </tr>
+                    }
+                    @foreach (var e in expiring)
+                    {
+                        <tr>
+                            <td>@e.VulnerabilityInstance?.AssetHost?.HostName</td>
+                            <td>@e.VulnerabilityInstance?.VulnerabilityFinding?.PluginName</td>
+                            <td>@(e.ExpiresAt?.ToString("yyyy-MM-dd") ?? "—")</td>
+                            <td><span class="pill Exception">Expiring</span></td>
+                        </tr>
+                    }
+                    @if (overdue.Count == 0 && expiring.Count == 0)
+                    { <tr><td colspan="4" class="empty">Nothing overdue.</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

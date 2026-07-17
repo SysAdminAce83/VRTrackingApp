@@ -1,0 +1,84 @@
+@model VRTrackingApp.Web.Controllers.UploadController.UploadPreviewVm
+@{
+    ViewData["Title"] = "Validate & Preview";
+    var p = Model.Preview;
+}
+
+<div class="page-head">
+    <div>
+        <h1>Validation &amp; Parse Preview</h1>
+        <p class="page-sub">Review the parsed result before committing. Nothing is saved until you confirm.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index">← Back</a>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-h">Validation status @(p.Valid ? Html.Raw("<span class=\"pill Completed\">Valid</span>") : Html.Raw("<span class=\"pill Exception\">Invalid</span>"))</div>
+        <div class="card-b">
+            <div class="field"><div class="f-label">Original file</div><div class="f-val">@Model.OriginalFileName</div></div>
+            <div class="field"><div class="f-label">Stored as</div><div class="f-val"><code>@Model.Token</code></div></div>
+            <div class="field"><div class="f-label">Size</div><div class="f-val">@(Model.FileSize / 1024) KB</div></div>
+            <div class="field"><div class="f-label">SHA-256</div><div class="f-val" style="font-size:11px;word-break:break-all">@Model.FileHash</div></div>
+            <ul class="mt-2 small">
+                @foreach (var c in p.ValidationChecks) { <li>@c</li> }
+            </ul>
+            <div class="@(p.Valid ? "text-success" : "text-danger")"><b>@p.Message</b></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-h">Summary</div>
+        <div class="card-b">
+            <div class="score-grid">
+                <div class="score-box"><div class="s-val">@p.Hosts</div><div class="s-lbl">Hosts</div></div>
+                <div class="score-box"><div class="s-val">@p.Findings</div><div class="s-lbl">Findings</div></div>
+                <div class="score-box"><div class="s-val">@p.Instances</div><div class="s-lbl">Instances</div></div>
+                <div class="score-box"><div class="s-val">@Model.SourceType</div><div class="s-lbl">Source Type</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (p.Sample.Any())
+{
+    <div class="card mb-3">
+        <div class="card-h">Parse result preview (first @p.Sample.Count rows)</div>
+        <div class="card-b p-0">
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Sev</th><th>Plugin</th><th>Name</th><th>Host</th><th>CVE</th></tr></thead>
+                <tbody>
+                    @foreach (var r in p.Sample)
+                    {
+                        <tr>
+                            <td>@Html.Raw(VRTrackingApp.Web.Html.UiHelpers.Sev(r.Severity))</td>
+                            <td>@r.PluginId</td>
+                            <td>@r.Name</td>
+                            <td>@r.Host</td>
+                            <td>@(r.Cve ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="card-b d-flex gap-2">
+        <form method="post" asp-action="Confirm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Token" value="@Model.Token" />
+            <input type="hidden" name="OriginalFileName" value="@Model.OriginalFileName" />
+            <input type="hidden" name="FileHash" value="@Model.FileHash" />
+            <input type="hidden" name="FileSize" value="@Model.FileSize" />
+            <input type="hidden" name="ScanName" value="@Model.ScanName" />
+            <input type="hidden" name="CycleLabel" value="@Model.CycleLabel" />
+            <input type="hidden" name="ScanDate" value="@(Model.ScanDate?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="SourceType" value="@Model.SourceType" />
+            <input type="hidden" name="Notes" value="@Model.Notes" />
+            <button class="btn btn-primary" @(p.Valid ? "" : "disabled")>Upload and Process</button>
+        </form>
+        <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+    </div>
+</div>

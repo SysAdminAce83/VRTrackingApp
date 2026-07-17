@@ -1,0 +1,217 @@
+@model IEnumerable<VRTrackingApp.Data.Models.UserAccount>
+@using VRTrackingApp.Data.Models
+@using Microsoft.AspNetCore.Authentication
+@using System.Security.Claims
+@{
+    var roles = (List<VRTrackingApp.Data.Models.Role>)ViewBag.Roles;
+    var userList = Model.ToList();
+    var total = userList.Count;
+    var active = userList.Count(u => u.IsActive);
+    var me = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : -1;
+    var auditTrail = ViewBag.AuditTrail as IEnumerable<VRTrackingApp.Data.Models.AuditLog> ?? new List<VRTrackingApp.Data.Models.AuditLog>();
+}
+
+<div class="page-head">
+    <div class="page-head-title">
+        <h1><span class="page-head-ico">⚙</span> Admin Settings</h1>
+        <p class="page-sub">Manage who can access the Remediation Console and their roles</p>
+    </div>
+    <div class="admin-stat-group">
+        <div class="admin-stat"><span class="admin-stat-v">@total</span><span class="admin-stat-l">Users</span></div>
+        <div class="admin-stat"><span class="admin-stat-v text-success">@active</span><span class="admin-stat-l">Active</span></div>
+        <div class="admin-stat"><span class="admin-stat-v text-muted">@(total - active)</span><span class="admin-stat-l">Inactive</span></div>
+        <div class="admin-stat"><span class="admin-stat-v">@roles.Count</span><span class="admin-stat-l">Roles</span></div>
+    </div>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@Html.AntiForgeryToken()
+
+<div class="grid-2b admin-grid">
+    <div class="card">
+        <div class="card-h">
+            <span>Users</span>
+            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#userModal"
+                    data-mode="create">+ Add user</button>
+        </div>
+        <div class="card-b p-0">
+            <div class="table-scroll">
+                <table class="table table-sm mb-0 align-middle admin-users">
+                    <thead>
+                        <tr><th>Name</th><th>Email</th><th>Role</th><th>Location</th><th class="text-center">Status</th><th class="text-end">Actions</th></tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var u in userList)
+                    {
+                        <tr>
+                            <td class="fw-600">@u.DisplayName</td>
+                            <td class="text-muted email">@u.Email</td>
+                            <td><span class="role-badge">@u.Role?.Name</span></td>
+                            <td>@if (!string.IsNullOrWhiteSpace(u.Location)) { <span class="loc-badge">@u.Location</span> }</td>
+                            <td class="text-center">
+                                @if (u.IsActive) { <span class="status-badge status-on">● Active</span> }
+                                else { <span class="status-badge status-off">○ Inactive</span> }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex gap-1 justify-content-end flex-nowrap">
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#userModal"
+                                            data-mode="edit" data-id="@u.Id" data-name="@u.UserName" data-email="@u.Email"
+                                            data-display="@u.DisplayName" data-role="@u.RoleId" data-location="@u.Location" data-active="@u.IsActive">Edit</button>
+                                    @if (u.Id != me)
+                                    {
+                                        <form method="post" action="@Url.Action("Delete")" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@u.Id" />
+                                            <button class="btn btn-sm btn-outline-danger" type="submit"
+                                                    onclick="return confirm('Delete user @u.UserName? This cannot be undone.');">Delete</button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-h">
+            <span>Roles</span>
+            <span class="card-h-sub">@roles.Count defined</span>
+        </div>
+        <div class="card-b p-0">
+            <div class="table-scroll">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead><tr><th>Role</th><th>Description</th></tr></thead>
+                    <tbody>
+                        @foreach (var r in roles)
+                        {
+                            <tr>
+                                <td class="fw-600"><span class="role-badge">@r.Name</span></td>
+                                <td class="text-muted">@r.Description</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card admin-card-wide mt-3">
+    <div class="card-h">
+        <span>Audit trail</span>
+        <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", "Audit")">View all</a>
+    </div>
+    <div class="card-b p-0">
+        <div class="table-scroll" style="max-height:300px;">
+            <table class="table table-sm mb-0 align-middle">
+                <thead><tr><th>When</th><th>Category</th><th>Action</th><th>Target</th><th>By</th></tr></thead>
+                <tbody>
+                    @foreach (var a in auditTrail)
+                    {
+                        <tr>
+                            <td class="text-muted">@a.PerformedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td><span class="src-tag">@a.Category</span></td>
+                            <td>@ActionBadge(a.Action)</td>
+                            <td class="text-muted">@a.Target</td>
+                            <td class="text-muted">@a.PerformedByDisplayName</td>
+                        </tr>
+                    }
+                    @if (!auditTrail.Any()) { <tr><td colspan="5" class="empty">No changes recorded yet.</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- User create/edit modal -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" id="userForm" class="modal-content">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" id="userId" />
+            <div class="modal-header">
+                <h5 class="modal-title" id="userModalTitle">Add user</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label">Username (AD logon, e.g. jdoe)</label>
+                    <input class="form-control" name="userName" id="userName" required />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Display name</label>
+                    <input class="form-control" name="displayName" id="displayName" />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Email</label>
+                    <input class="form-control" name="email" id="email" type="email" required />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Role</label>
+                    <select class="form-select" name="roleId" id="roleId">
+                        @foreach (var r in roles) { <option value="@r.Id">@r.Name</option> }
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Location</label>
+                    <input class="form-control" name="location" id="location" placeholder="e.g. Corporate Datacenter" />
+                    <div class="form-hint">Security Champions approve exceptions only for their location.</div>
+                </div>
+                <div class="form-check">
+                    <input type="hidden" name="isActive" value="false" />
+                    <input class="form-check-input" type="checkbox" name="isActive" id="isActive" value="true" checked />
+                    <label class="form-check-label" for="isActive">Active (allowed to sign in)</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="userSubmit">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var userModal = document.getElementById('userModal');
+        userModal.addEventListener('show.bs.modal', function (e) {
+            var t = e.relatedTarget;
+            var edit = t.dataset.mode === 'edit';
+            document.getElementById('userModalTitle').textContent = edit ? 'Edit user' : 'Add user';
+            document.getElementById('userSubmit').textContent = edit ? 'Save changes' : 'Create user';
+            document.getElementById('userId').value = edit ? t.dataset.id : '';
+            document.getElementById('userName').value = edit ? t.dataset.name : '';
+            document.getElementById('userName').readOnly = edit; // AD logon is the key
+            document.getElementById('displayName').value = edit ? t.dataset.display : '';
+            document.getElementById('email').value = edit ? t.dataset.email : '';
+            document.getElementById('roleId').value = edit ? t.dataset.role : '';
+            document.getElementById('location').value = edit ? t.dataset.location || '' : '';
+            document.getElementById('isActive').checked = !edit || t.dataset.active === 'True';
+            document.getElementById('userForm').action = edit ? '@Url.Action("Edit")' : '@Url.Action("Create")';
+        });
+    </script>
+}
+
+@functions {
+    static Microsoft.AspNetCore.Html.IHtmlContent ActionBadge(string action)
+    {
+        var cls = action switch
+        {
+            "Created" => "action-add",
+            "Edited" => "action-upd",
+            "Deleted" => "action-del",
+            "Approved" => "action-add",
+            "Rejected" => "action-del",
+            _ => "action-upd"
+        };
+        return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"action-badge {cls}\">{action}</span>");
+    }
+}

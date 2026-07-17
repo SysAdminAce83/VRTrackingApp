@@ -1,0 +1,30 @@
+@model VRTrackingApp.Data.Models.Asset
+
+<div class="page-head">
+    <div>
+        <h1>Delete asset</h1>
+        <p class="page-sub">@Model.HostName · @Model.IpAddress</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">← Back</a>
+</div>
+
+<div class="card" style="max-width: 560px;">
+    <div class="card-b">
+        <div class="alert alert-danger">
+            Are you sure you want to delete this asset from the inventory?
+            Linked scan rows will keep their host information but lose the inventory link.
+        </div>
+        <dl class="kv">
+            <dt>Hostname</dt><dd>@Model.HostName</dd>
+            <dt>IP</dt><dd>@Model.IpAddress</dd>
+            <dt>Category</dt><dd>@(Model.Category ?? "—")</dd>
+        </dl>
+        <form method="post" asp-action="Delete" asp-route-id="@Model.Id">
+            @Html.AntiForgeryToken()
+            <div class="d-flex gap-2">
+                <button class="btn btn-danger" type="submit">Delete asset</button>
+                <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

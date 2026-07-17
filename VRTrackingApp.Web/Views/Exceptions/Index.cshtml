@@ -1,0 +1,15 @@
+@model IEnumerable<VRTrackingApp.Data.Models.ExceptionRecord>
+@using VRTrackingApp.Data.Models
+<div class="page-head">
+    <div>
+        <h1>Exception Register</h1>
+        <p class="page-sub">Vulnerability exceptions and their approval status</p>
+    </div>
+</div>
+
+<div class="tabs mb-3">
+    <a class="tab active" asp-action="Index">▦ Register</a>
+    <a class="tab" asp-action="Dashboard">📊 Dashboard</a>
+</div>
+
+@await Html.PartialAsync("_ExceptionsTable", Model)

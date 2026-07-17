@@ -1,0 +1,34 @@
+@model IEnumerable<VRTrackingApp.Web.Controllers.ScansController.ScanRow>
+
+<div class="page-head">
+    <div>
+        <h1>Scans</h1>
+        <p class="page-sub">Imported scan cycles</p>
+    </div>
+    <a class="btn btn-primary" asp-controller="Upload" asp-action="Index">⤓ Upload Scan</a>
+</div>
+
+<div class="card">
+    <div class="card-b p-0">
+        <table class="table mb-0">
+            <thead>
+                <tr><th>Cycle</th><th>Type</th><th>Scan Date</th><th>Hosts</th><th>Findings</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    var s = r.Scan;
+                    <tr>
+                        <td>@(s.ScanCycleLabel ?? s.FileName)</td>
+                        <td><span class="src-tag">@s.SourceType</span></td>
+                        <td>@(s.ScanDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                        <td>@r.HostCount</td>
+                        <td>@r.FindingCount</td>
+                        <td><span class="pill @s.Status">@s.Status</span></td>
+                        <td><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@s.Id">View</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

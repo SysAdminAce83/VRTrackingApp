@@ -1,0 +1,149 @@
+@model VRTrackingApp.Data.Models.Asset
+
+<div class="page-head">
+    <div>
+        <h1>Edit @Model.HostName</h1>
+        <p class="page-sub">@Model.IpAddress · classification, BIA, ownership &amp; DR/BC</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">← Back</a>
+</div>
+
+<div class="card">
+    <div class="card-b">
+        <form method="post" asp-action="Edit" asp-route-id="@Model.Id">
+            @Html.AntiForgeryToken()
+
+            <div class="grid-2">
+                <div class="card-b">
+                    <div class="section-title">Asset Identification</div>
+                    @Html.Raw(Field("Server ID", "ServerId", Model.ServerId))
+                    @Html.Raw(Field("Server Name", "HostName", Model.HostName))
+                    @Html.Raw(Field("IP Address", "IpAddress", Model.IpAddress))
+                    @Html.Raw(Field("Asset Status", "AssetStatus", Model.AssetStatus, "dlStatus"))
+                    @Html.Raw(Field("Datacenter", "Datacenter", Model.Datacenter))
+                    @Html.Raw(Field("Location", "Location", Model.Location))
+                    @Html.Raw(Field("Operating System", "OperatingSystem", Model.OperatingSystem))
+                    @Html.Raw(Field("Category", "Category", Model.Category, "dlCategory"))
+                    @Html.Raw(Field("Sub-category", "SubCategory", Model.SubCategory, "dlSubCategory"))
+                </div>
+
+                <div class="card-b">
+                    <div class="section-title">BIA Criticality (CIA)</div>
+                    @Html.Raw(Field("BIA-Criticality", "BiaCriticality", Model.BiaCriticality, "dlLevel"))
+                    @Html.Raw(Field("Confidentiality", "Confidentiality", Model.Confidentiality, "dlLevel"))
+                    @Html.Raw(Field("Integrity", "Integrity", Model.Integrity, "dlLevel"))
+                    @Html.Raw(Field("Availability", "Availability", Model.Availability, "dlLevel"))
+                    @Html.Raw(Field("Asset Criticality", "AssetCriticality", Model.AssetCriticality, "dlLevel"))
+                </div>
+
+                <div class="card-b">
+                    <div class="section-title">Application</div>
+                    @Html.Raw(Field("Application", "Application", Model.Application))
+                    @Html.Raw(Field("Application Owner", "ApplicationOwner", Model.ApplicationOwner))
+                    @Html.Raw(Field("Active Directory Comments", "ActiveDirectoryComments", Model.ActiveDirectoryComments))
+                    @Html.Raw(Field("Environment", "Environment", Model.Environment, "dlEnv"))
+                    @Html.Raw(Field("Backup Document", "BackupDocument", Model.BackupDocument))
+                    @Html.Raw(Field("Backup Owner", "BackupOwner", Model.BackupOwner))
+                    @Html.Raw(Field("Group / Landscape", "GroupLandscape", Model.GroupLandscape))
+                    @Html.Raw(Field("Application / System Name", "ApplicationSystemName", Model.ApplicationSystemName))
+                    @Html.Raw(Area("System Description", "SystemDescription", Model.SystemDescription))
+                </div>
+
+                <div class="card-b">
+                    <div class="section-title">Ownership &amp; Points of Contact</div>
+                    @Html.Raw(Field("Asset Owner", "AssetOwner", Model.AssetOwner))
+                    @Html.Raw(Field("Business Owner", "BusinessOwner", Model.BusinessOwner))
+                    @Html.Raw(Field("Internal POC (Dayco Contact)", "InternalPoc", Model.InternalPoc))
+                    @Html.Raw(Field("Onsite Resource Backup Responsibility", "OnsiteResourceBackup", Model.OnsiteResourceBackup))
+                    @Html.Raw(Field("POC Role", "PocRole", Model.PocRole))
+                    @Html.Raw(Field("External POC (Vendor)", "ExternalPoc", Model.ExternalPoc))
+                    @Html.Raw(Field("External POC Role", "ExternalPocRole", Model.ExternalPocRole))
+                </div>
+
+                <div class="card-b">
+                    <div class="section-title">Hardware Requirements</div>
+                    @Html.Raw(Num("CPU Core Count", "CpuCoreCount", Model.CpuCoreCount))
+                    @Html.Raw(Num("RAM (GB)", "RamGb", Model.RamGb))
+                    @Html.Raw(Num("Drive Count", "DriveCount", Model.DriveCount))
+                    @Html.Raw(Num("Total Disk Space (GB)", "TotalDiskSpaceGb", Model.TotalDiskSpaceGb))
+                    @Html.Raw(Field("Vendor", "Vendor", Model.Vendor))
+                    @Html.Raw(Area("Description", "HardwareDescription", Model.HardwareDescription))
+                </div>
+
+                <div class="card-b">
+                    <div class="section-title">Resources, Software &amp; Redundancy</div>
+                    @Html.Raw(Field("Hardware", "Hardware", Model.Hardware))
+                    @Html.Raw(Field("Software", "Software", Model.Software))
+                    @Html.Raw(Field("Server Name 2", "ServerName2", Model.ServerName2))
+                    @Html.Raw(Field("Server IP Address 2", "ServerIpAddress2", Model.ServerIpAddress2))
+                    @Html.Raw(Area("Other IT Resources", "OtherItResources", Model.OtherItResources))
+                    @Html.Raw(Field("Redundancy @ Primary DC", "RedundancyPrimaryDc", Model.RedundancyPrimaryDc, "dlYesNo"))
+                    @Html.Raw(Field("Critical Roles", "CriticalRoles", Model.CriticalRoles))
+                    @Html.Raw(Area("Critical Resources", "CriticalResources", Model.CriticalResources))
+                </div>
+
+                <div class="card-b">
+                    <div class="section-title">Dependencies &amp; Impact</div>
+                    @Html.Raw(Area("Inter-Dependencies", "InterDependencies", Model.InterDependencies))
+                    @Html.Raw(Field("Data Replication Frequency", "DataReplicationFrequency", Model.DataReplicationFrequency))
+                    @Html.Raw(Field("Peak Time", "PeakTime", Model.PeakTime))
+                    @Html.Raw(Field("Off-Peak Time", "OffPeakTime", Model.OffPeakTime))
+                    @Html.Raw(Area("Outage Impact", "OutageImpact", Model.OutageImpact))
+                    @Html.Raw(Area("Financial Impact", "FinancialImpact", Model.FinancialImpact))
+                    @Html.Raw(Area("Non-Financial Impact", "NonFinancialImpact", Model.NonFinancialImpact))
+                    @Html.Raw(Area("Regulatory / Legal Impact", "RegulatoryImpact", Model.RegulatoryImpact))
+                    @Html.Raw(Field("Criticality", "Criticality2", Model.Criticality2, "dlLevel"))
+                </div>
+
+                <div class="card-b">
+                    <div class="section-title">Disaster Recovery &amp; Business Continuity</div>
+                    @Html.Raw(Field("Disaster Recovery Required", "DisasterRecoveryRequired", Model.DisasterRecoveryRequired, "dlYesNo"))
+                    @Html.Raw(Area("DR Setup Details", "DrSetupDetails", Model.DrSetupDetails))
+                    @Html.Raw(Field("Redundancy @ DR DC", "RedundancyDrDc", Model.RedundancyDrDc))
+                    @Html.Raw(Field("Prioritize Resource Recovery", "PrioritizeResourceRecovery", Model.PrioritizeResourceRecovery))
+                    @Html.Raw(Field("Minimum Hardware", "MinimumHardware", Model.MinimumHardware))
+                    @Html.Raw(Field("Minimum Hardware 2", "MinimumHardware2", Model.MinimumHardware2))
+                    @Html.Raw(Field("Minimum IT Resources", "MinimumItResources", Model.MinimumItResources))
+                    @Html.Raw(Field("RTO", "Rto", Model.Rto))
+                    @Html.Raw(Field("RPO", "Rpo", Model.Rpo))
+                    @Html.Raw(Field("MOL", "Mol", Model.Mol))
+                    @Html.Raw(Field("Backup Schedule", "BackupSchedule", Model.BackupSchedule))
+                    @Html.Raw(Field("Bus Unit", "BusUnit", Model.BusUnit))
+                </div>
+            </div>
+
+            <div class="mt-3">
+                @Html.Raw(Area("Notes", "Notes", Model.Notes))
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-primary" type="submit">Save changes</button>
+                <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<datalist id="dlCategory">@foreach (var c in (string[])ViewBag.SuggestedCategories) { <option value="@c"></option> }</datalist>
+<datalist id="dlSubCategory">@foreach (var s in (string[])ViewBag.SuggestedSubCategories) { <option value="@s"></option> }</datalist>
+<datalist id="dlLevel"><option value="High"></option><option value="Medium"></option><option value="Low"></option><option value="None"></option></datalist>
+<datalist id="dlEnv"><option value="Production"></option><option value="Test"></option><option value="Development"></option><option value="DR"></option><option value="Staging"></option></datalist>
+<datalist id="dlStatus"><option value="Active"></option><option value="Retired"></option><option value="Maintenance"></option><option value="Decommissioned"></option></datalist>
+<datalist id="dlYesNo"><option value="Yes"></option><option value="No"></option><option value="Required"></option><option value="Not Required"></option></datalist>
+
+@functions {
+    string Enc(object? v) => v == null ? "" : System.Net.WebUtility.HtmlEncode(v.ToString());
+    string Field(string label, string name, string? value, string? datalist = null)
+    {
+        var dl = datalist != null ? $" list=\"{datalist}\"" : "";
+        return $"<div class=\"mb-3\"><label class=\"form-label\">{label}</label><input class=\"form-control\" name=\"{name}\" value=\"{Enc(value)}\"{dl} /></div>";
+    }
+    string Area(string label, string name, string? value)
+    {
+        return $"<div class=\"mb-3\"><label class=\"form-label\">{label}</label><textarea class=\"form-control\" name=\"{name}\" rows=\"3\">{Enc(value)}</textarea></div>";
+    }
+    string Num(string label, string name, int? value)
+    {
+        return $"<div class=\"mb-3\"><label class=\"form-label\">{label}</label><input class=\"form-control\" type=\"number\" name=\"{name}\" value=\"{value?.ToString() ?? ""}\" /></div>";
+    }
+}

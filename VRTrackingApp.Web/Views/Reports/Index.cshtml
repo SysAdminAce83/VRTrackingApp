@@ -1,0 +1,153 @@
+@{
+    var byMonth = (List<VRTrackingApp.Web.Controllers.ReportsController.MonthStat>)ViewBag.ByMonth;
+    var openBySev = (Dictionary<string, int>)ViewBag.OpenBySev;
+    var excByTeam = (Dictionary<string, int>)ViewBag.ExcByTeam;
+    var trend = (List<VRTrackingApp.Web.Controllers.ReportsController.TrendStat>)ViewBag.Trend;
+    var rtype = (string)ViewBag.ReportType;
+    var totalSev = openBySev.Values.Sum() == 0 ? 1 : openBySev.Values.Sum();
+    var tabs = new[] { "Monthly", "PatchTuesday", "ZeroDay", "RiskBased" };
+    var exc = (VRTrackingApp.Web.Controllers.ReportsController.ExcSummary)ViewBag.ExcSummary;
+    var excByReason = (List<VRTrackingApp.Web.Controllers.ReportsController.NameCount>)ViewBag.ExcByReason;
+    int MaxOf(List<VRTrackingApp.Web.Controllers.ReportsController.NameCount> l) => l.Count == 0 ? 1 : l.Max(x => x.Count);
+}
+
+<div class="page-head">
+    <div><h1>Reports</h1><p class="page-sub">Remediation progress, exceptions and trending</p></div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-controller="Exceptions" asp-action="ExportCsv">⤓ Exception Register</a>
+        <a class="btn btn-outline-primary" asp-action="ExportCsv" asp-route-type="@rtype">⤓ Export CSV</a>
+        <a class="btn btn-outline-secondary" asp-action="ExportPdf" asp-route-type="@rtype">⤓ Export PDF</a>
+    </div>
+</div>
+
+<div class="kpi-row mb-3">
+    <div class="kpi-card"><div class="kpi-val">@exc.Total</div><div class="kpi-lbl">Total Exceptions</div></div>
+    <div class="kpi-card kpi-ok"><div class="kpi-val">@exc.Active</div><div class="kpi-lbl">Active</div></div>
+    <div class="kpi-card kpi-warn"><div class="kpi-val">@exc.Pending</div><div class="kpi-lbl">Pending</div></div>
+    <div class="kpi-card kpi-danger"><div class="kpi-val">@exc.AcceptedCritical</div><div class="kpi-lbl">Accepted Critical</div></div>
+    <div class="kpi-card"><div class="kpi-val">@exc.AvgAgeDays d</div><div class="kpi-lbl">Avg Age (active)</div></div>
+    <div class="kpi-card kpi-warn"><div class="kpi-val">@exc.ReviewDue</div><div class="kpi-lbl">Review Due</div></div>
+    <div class="kpi-card kpi-danger"><div class="kpi-val">@exc.Expired</div><div class="kpi-lbl">Expired</div></div>
+    <div class="kpi-card kpi-danger"><div class="kpi-val">@exc.Rejected</div><div class="kpi-lbl">Rejected</div></div>
+</div>
+
+<div class="dash-grid">
+    <div class="card">
+        <div class="card-h"><span>Exceptions by reason (not fixable)</span><span class="card-h-sub">accepted-risk drivers</span></div>
+        <div class="card-b">
+            @{ var rmax = MaxOf(excByReason); }
+            @foreach (var r in excByReason)
+            {
+                <div class="hbar-row">
+                    <div class="hbar-label" title="@r.Label">@r.Label</div>
+                    <div class="hbar-track"><div class="hbar-fill Reason" style="width:@(rmax == 0 ? 0 : (int)Math.Round(100.0 * r.Count / rmax))%"></div></div>
+                    <div class="hbar-val">@r.Count</div>
+                </div>
+            }
+            @if (excByReason.Count == 0) { <div class="empty">No reasons recorded.</div> }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-h"><span>Exception posture</span></div>
+        <div class="card-b">
+            <div class="kv">
+                <dt>Total</dt><dd>@exc.Total</dd>
+                <dt>Active</dt><dd>@exc.Active</dd>
+                <dt>Pending approval</dt><dd>@exc.Pending</dd>
+                <dt>Accepted critical risk</dt><dd>@exc.AcceptedCritical</dd>
+                <dt>Average age (active)</dt><dd>@exc.AvgAgeDays days</dd>
+                <dt>Review due</dt><dd>@exc.ReviewDue</dd>
+                <dt>Expired</dt><dd>@exc.Expired</dd>
+                <dt>Rejected</dt><dd>@exc.Rejected</dd>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm mt-2" asp-controller="Exceptions" asp-action="Index">Open Exception Register →</a>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-b">
+        <div class="tabs">
+            @foreach (var t in tabs)
+            {
+                <a class="tab @(rtype == t ? "active" : "")" asp-action="Index" asp-route-type="@t">@t</a>
+            }
+            <a class="tab" asp-action="Trends">Trends</a>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-h">Remediation by scan cycle</div>
+        <div class="card-b">
+            @foreach (var m in byMonth)
+            {
+                var total = m.Open + m.Fixed + m.Exception;
+                var pO = total == 0 ? 0 : (int)(100.0 * m.Open / total);
+                var pF = total == 0 ? 0 : (int)(100.0 * m.Fixed / total);
+                var pE = total == 0 ? 0 : (int)(100.0 * m.Exception / total);
+                <div class="bar-row">
+                    <div class="bar-label">@m.Month</div>
+                    <div class="bar-track">
+                        <div class="bar-seg Open" style="width:@pO%"></div>
+                        <div class="bar-seg Fixed" style="width:@pF%"></div>
+                        <div class="bar-seg Exception" style="width:@pE%"></div>
+                    </div>
+                    <div style="width:48px;text-align:right;font-size:12px;color:#6b7686">@total</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-h">Open vulnerabilities by severity</div>
+        <div class="card-b">
+            <div class="donut-wrap">
+                <div class="donut" style="background:conic-gradient(
+                    var(--crit) 0 calc(100% * @(openBySev["Critical"])/@totalSev),
+                    var(--high) 0 calc(100% * @(openBySev["Critical"]+openBySev["High"])/@totalSev),
+                    var(--med) 0 calc(100% * @(openBySev["Critical"]+openBySev["High"]+openBySev["Medium"])/@totalSev),
+                    var(--low) 0 calc(100% * @(openBySev["Critical"]+openBySev["High"]+openBySev["Medium"]+openBySev["Low"])/@totalSev),
+                    var(--info) 0 100%)"></div>
+                <ul class="legend">
+                    @foreach (var s in new[] { "Critical", "High", "Medium", "Low", "Info" })
+                    { <li><span class="dot" style="background:var(--@s.ToLower())"></span> @s <b>@openBySev[s]</b></li> }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2b">
+    <div class="card">
+        <div class="card-h">Exceptions by team</div>
+        <div class="card-b">
+            @foreach (var kv in excByTeam)
+            {
+                var pct = excByTeam.Values.Sum() == 0 ? 0 : (int)(100.0 * kv.Value / excByTeam.Values.Sum());
+                <div class="bar-row">
+                    <div class="bar-label">@kv.Key</div>
+                    <div class="bar-track"><div class="bar-seg Exception" style="width:@pct%"></div></div>
+                    <div style="width:36px;text-align:right;font-size:12px;color:#6b7686">@kv.Value</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-h">Remediation trend (cycle → cycle)</div>
+        <div class="card-b">
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Cycle</th><th>Total</th><th>Remediated %</th></tr></thead>
+                <tbody>
+                    @foreach (var t in trend)
+                    {
+                        <tr><td>@t.Month</td><td>@t.Total</td><td>@t.RemediatedPct%</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

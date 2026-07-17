@@ -1,0 +1,35 @@
+@model IEnumerable<VRTrackingApp.Data.Models.AssetHost>
+
+<div class="page-head">
+    <div><h1>Hosts</h1><p class="page-sub">All scanned assets</p></div>
+</div>
+
+<form class="toolbar" asp-action="Index" method="get">
+    <input class="form-control" name="q" placeholder="Filter by hostname or IP…" value="@Context.Request.Query["q"]" />
+    <button class="btn btn-outline-primary">Search</button>
+</form>
+
+<div class="card">
+    <div class="card-b p-0">
+        <table class="table mb-0">
+            <thead><tr><th>Hostname</th><th>IP</th><th>OS</th><th>Scan Cycle</th><th>Critical</th><th>High</th><th>Open</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var h in Model)
+                {
+                    var bySev = h.Instances.GroupBy(i => i.VulnerabilityFinding!.Severity).ToDictionary(g => g.Key, g => g.Count());
+                    var open = h.Instances.Count(i => i.Status == "Open");
+                    <tr>
+                        <td><a asp-action="Details" asp-route-id="@h.Id">@h.HostName</a></td>
+                        <td>@h.IpAddress</td>
+                        <td>@h.OperatingSystem</td>
+                        <td>@h.ScanUpload?.ScanCycleLabel</td>
+                        <td><span class="sev Critical">@(bySev.GetValueOrDefault("Critical"))</span></td>
+                        <td><span class="sev High">@(bySev.GetValueOrDefault("High"))</span></td>
+                        <td>@open</td>
+                        <td><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@h.Id">View</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

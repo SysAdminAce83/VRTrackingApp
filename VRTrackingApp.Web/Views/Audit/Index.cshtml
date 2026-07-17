@@ -1,0 +1,68 @@
+@model IEnumerable<VRTrackingApp.Data.Models.AuditLog>
+@{
+    var categories = (string[])ViewBag.Categories;
+    var actions = (string[])ViewBag.Actions;
+}
+
+<div class="page-head">
+    <div>
+        <h1>Audit Log</h1>
+        <p class="page-sub">Every change made in the system — who, when, and what</p>
+    </div>
+</div>
+
+<form method="get" class="toolbar mb-3">
+    <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+        @foreach (var c in categories) { <option value="@c" selected="@(ViewBag.Category == c ? "selected" : "")">@c</option> }
+    </select>
+    <select name="act" class="form-select form-select-sm" onchange="this.form.submit()">
+        @foreach (var a in actions) { <option value="@a" selected="@(ViewBag.Action == a ? "selected" : "")">@a</option> }
+    </select>
+    <a class="btn btn-outline-secondary btn-sm" href="@Url.Action("Index")">Reset</a>
+</form>
+
+<div class="card admin-card-wide">
+    <div class="card-h">
+        <span>Change history</span>
+        <span class="card-h-sub">@Model.Count() entries</span>
+    </div>
+    <div class="card-b p-0">
+        <div class="table-scroll table-scroll-wide">
+            <table class="table table-sm mb-0 align-middle">
+                <thead>
+                    <tr><th>When</th><th>Category</th><th>Action</th><th>Target</th><th>By</th><th>Detail</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model)
+                    {
+                        <tr>
+                            <td class="text-muted">@a.PerformedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td><span class="src-tag">@a.Category</span></td>
+                            <td>@ActionBadge(a.Action)</td>
+                            <td class="fw-600">@a.Target</td>
+                            <td class="text-muted">@a.PerformedByDisplayName</td>
+                            <td class="text-muted">@a.Detail</td>
+                        </tr>
+                    }
+                    @if (!Model.Any()) { <tr><td colspan="6" class="empty">No audit entries recorded yet.</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@functions {
+    static Microsoft.AspNetCore.Html.IHtmlContent ActionBadge(string action)
+    {
+        var cls = action switch
+        {
+            "Created" => "action-add",
+            "Edited" => "action-upd",
+            "Deleted" => "action-del",
+            "Approved" => "action-add",
+            "Rejected" => "action-del",
+            _ => "action-upd"
+        };
+        return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"action-badge {cls}\">{action}</span>");
+    }
+}

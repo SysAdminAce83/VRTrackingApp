@@ -1,0 +1,48 @@
+@model IEnumerable<VRTrackingApp.Data.Models.Notification>
+@{
+    var unread = Model.Count(n => !n.IsRead);
+}
+<div class="page-head">
+    <div>
+        <h1>Notifications</h1>
+        <p class="page-sub">@unread unread of @Model.Count() total</p>
+    </div>
+    @if (unread > 0)
+    {
+        <form method="post" asp-action="MarkAllRead" class="m-0">
+            @Html.AntiForgeryToken()
+            <button class="btn btn-outline-secondary btn-sm">Mark all read</button>
+        </form>
+    }
+</div>
+
+<div class="card admin-card-wide">
+    <div class="card-b p-0">
+        <ul class="notif-list">
+            @foreach (var n in Model)
+            {
+                <li class="@(n.IsRead ? "" : "unread")">
+                    <div class="notif-main">
+                        <div class="notif-title">@n.Title</div>
+                        <div class="notif-msg">@n.Message</div>
+                        <div class="t-when">@n.CreatedAt.ToString("yyyy-MM-dd HH:mm") · @n.Type</div>
+                    </div>
+                    <div class="notif-actions">
+                        @if (!n.IsRead)
+                        {
+                            <form method="post" asp-action="MarkRead" asp-route-id="@n.Id">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-outline-primary">Mark read</button>
+                            </form>
+                        }
+                        @if (n.ExceptionRecordId != null)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary" asp-controller="Exceptions" asp-action="Details" asp-route-id="@n.ExceptionRecordId">Open</a>
+                        }
+                    </div>
+                </li>
+            }
+            @if (!Model.Any()) { <li class="text-muted p-3">You have no notifications.</li> }
+        </ul>
+    </div>
+</div>

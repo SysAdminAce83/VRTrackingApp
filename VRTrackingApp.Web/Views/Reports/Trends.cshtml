@@ -1,0 +1,47 @@
+@{
+    var sev = (List<VRTrackingApp.Web.Controllers.ReportsController.SeverityTrendPoint>)ViewBag.SevCycle;
+    var totals = (VRTrackingApp.Web.Controllers.ReportsController.TrendTotals)ViewBag.Totals;
+    int mx = 1;
+    foreach (var p in sev) { var t = p.Critical + p.High + p.Medium + p.Low + p.Info; if (t > mx) mx = t; }
+}
+<div class="page-head">
+    <div><h1>Vulnerability Trends</h1><p class="page-sub">Severity distribution across scan cycles</p></div>
+    <a class="btn btn-outline-secondary" asp-action="Index">← Reports</a>
+</div>
+
+<div class="kpi-row mb-3">
+    <div class="kpi-card"><div class="kpi-val">@totals.Total</div><div class="kpi-lbl">Total Findings</div></div>
+    <div class="kpi-card kpi-danger"><div class="kpi-val">@totals.Open</div><div class="kpi-lbl">Open</div></div>
+    <div class="kpi-card kpi-ok"><div class="kpi-val">@totals.Fixed</div><div class="kpi-lbl">Fixed</div></div>
+    <div class="kpi-card kpi-warn"><div class="kpi-val">@totals.Exception</div><div class="kpi-lbl">Exception</div></div>
+    <div class="kpi-card kpi-info"><div class="kpi-val">@sev.Count</div><div class="kpi-lbl">Scan Cycles</div></div>
+</div>
+
+<div class="card">
+    <div class="card-h"><span>Findings by severity per scan cycle</span></div>
+    <div class="card-b">
+        @foreach (var p in sev)
+        {
+            var total = p.Critical + p.High + p.Medium + p.Low + p.Info;
+            <div class="bar-row">
+                <div class="bar-label">@p.Month</div>
+                <div class="bar-track">
+                    <div class="bar-seg Crit" style="width:@(mx==0?0:(int)(100.0*p.Critical/mx))%" title="Critical @p.Critical"></div>
+                    <div class="bar-seg High" style="width:@(mx==0?0:(int)(100.0*p.High/mx))%" title="High @p.High"></div>
+                    <div class="bar-seg Med" style="width:@(mx==0?0:(int)(100.0*p.Medium/mx))%" title="Medium @p.Medium"></div>
+                    <div class="bar-seg Low" style="width:@(mx==0?0:(int)(100.0*p.Low/mx))%" title="Low @p.Low"></div>
+                    <div class="bar-seg Info" style="width:@(mx==0?0:(int)(100.0*p.Info/mx))%" title="Info @p.Info"></div>
+                </div>
+                <div style="width:40px;text-align:right;font-size:12px;color:var(--muted)">@total</div>
+            </div>
+        }
+        @if (sev.Count == 0) { <div class="empty">No scan cycles yet.</div> }
+        <ul class="legend mt-2">
+            <li><span class="dot" style="background:var(--crit)"></span> Critical</li>
+            <li><span class="dot" style="background:var(--high)"></span> High</li>
+            <li><span class="dot" style="background:var(--med)"></span> Medium</li>
+            <li><span class="dot" style="background:var(--low)"></span> Low</li>
+            <li><span class="dot" style="background:var(--info)"></span> Info</li>
+        </ul>
+    </div>
+</div>

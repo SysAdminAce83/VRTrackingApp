@@ -1,0 +1,177 @@
+@model VRTrackingApp.Data.Models.Asset
+
+<div class="page-head">
+    <div>
+        <h1>@Model.HostName</h1>
+        <p class="page-sub">@Model.IpAddress · @(Model.OperatingSystem ?? "Unknown OS") · @(Model.AssetStatus ?? "—")</p>
+    </div>
+    <div>
+        <a class="btn btn-outline-secondary" asp-action="Index">← All assets</a>
+        <a class="btn btn-primary" asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
+        <form method="post" asp-action="Delete" asp-route-id="@Model.Id" class="d-inline"
+              onsubmit="return confirm('Delete this asset? Linked scan rows will keep their host but lose the inventory link.');">
+            @Html.AntiForgeryToken()
+            <button class="btn btn-outline-danger" type="submit">Delete</button>
+        </form>
+    </div>
+</div>
+
+@functions {
+    string F(string label, object? v)
+    {
+        var val = v == null ? "—" : v.ToString();
+        return $"<dt>{label}</dt><dd>{val}</dd>";
+    }
+}
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-h">Asset Identification</div>
+        <div class="card-b"><dl class="kv">
+            @Html.Raw(F("Server ID", Model.ServerId))
+            @Html.Raw(F("Server Name", Model.HostName))
+            @Html.Raw(F("IP Address", Model.IpAddress))
+            @Html.Raw(F("Asset Status", Model.AssetStatus))
+            @Html.Raw(F("Datacenter", Model.Datacenter))
+            @Html.Raw(F("Location", Model.Location))
+            @Html.Raw(F("Operating System", Model.OperatingSystem))
+            @Html.Raw(F("Category", Model.Category))
+            @Html.Raw(F("Sub-category", Model.SubCategory))
+        </dl></div>
+    </div>
+
+    <div class="card">
+        <div class="card-h">BIA Criticality (CIA)</div>
+        <div class="card-b"><dl class="kv">
+            @Html.Raw(F("BIA-Criticality", Model.BiaCriticality))
+            @Html.Raw(F("Confidentiality", Model.Confidentiality))
+            @Html.Raw(F("Integrity", Model.Integrity))
+            @Html.Raw(F("Availability", Model.Availability))
+            @Html.Raw(F("Asset Criticality", Model.AssetCriticality))
+        </dl></div>
+    </div>
+
+    <div class="card">
+        <div class="card-h">Application</div>
+        <div class="card-b"><dl class="kv">
+            @Html.Raw(F("Application", Model.Application))
+            @Html.Raw(F("Application Owner", Model.ApplicationOwner))
+            @Html.Raw(F("Active Directory Comments", Model.ActiveDirectoryComments))
+            @Html.Raw(F("Environment", Model.Environment))
+            @Html.Raw(F("Backup Document", Model.BackupDocument))
+            @Html.Raw(F("Backup Owner", Model.BackupOwner))
+            @Html.Raw(F("Group / Landscape", Model.GroupLandscape))
+            @Html.Raw(F("Application / System Name", Model.ApplicationSystemName))
+            @Html.Raw(F("System Description", Model.SystemDescription))
+        </dl></div>
+    </div>
+
+    <div class="card">
+        <div class="card-h">Ownership &amp; Points of Contact</div>
+        <div class="card-b"><dl class="kv">
+            @Html.Raw(F("Asset Owner", Model.AssetOwner))
+            @Html.Raw(F("Business Owner", Model.BusinessOwner))
+            @Html.Raw(F("Internal POC (Dayco Contact)", Model.InternalPoc))
+            @Html.Raw(F("Onsite Resource Backup Responsibility", Model.OnsiteResourceBackup))
+            @Html.Raw(F("POC Role", Model.PocRole))
+            @Html.Raw(F("External POC (Vendor)", Model.ExternalPoc))
+            @Html.Raw(F("External POC Role", Model.ExternalPocRole))
+        </dl></div>
+    </div>
+
+    <div class="card">
+        <div class="card-h">Hardware Requirements</div>
+        <div class="card-b"><dl class="kv">
+            @Html.Raw(F("CPU Core Count", Model.CpuCoreCount))
+            @Html.Raw(F("RAM (GB)", Model.RamGb))
+            @Html.Raw(F("Drive Count", Model.DriveCount))
+            @Html.Raw(F("Total Disk Space (GB)", Model.TotalDiskSpaceGb))
+            @Html.Raw(F("Vendor", Model.Vendor))
+            @Html.Raw(F("Description", Model.HardwareDescription))
+        </dl></div>
+    </div>
+
+    <div class="card">
+        <div class="card-h">Resources, Software &amp; Redundancy</div>
+        <div class="card-b"><dl class="kv">
+            @Html.Raw(F("Hardware", Model.Hardware))
+            @Html.Raw(F("Software", Model.Software))
+            @Html.Raw(F("Server Name 2", Model.ServerName2))
+            @Html.Raw(F("Server IP Address 2", Model.ServerIpAddress2))
+            @Html.Raw(F("Other IT Resources", Model.OtherItResources))
+            @Html.Raw(F("Redundancy @ Primary DC", Model.RedundancyPrimaryDc))
+            @Html.Raw(F("Critical Roles", Model.CriticalRoles))
+            @Html.Raw(F("Critical Resources", Model.CriticalResources))
+        </dl></div>
+    </div>
+
+    <div class="card">
+        <div class="card-h">Dependencies &amp; Impact</div>
+        <div class="card-b"><dl class="kv">
+            @Html.Raw(F("Inter-Dependencies", Model.InterDependencies))
+            @Html.Raw(F("Data Replication Frequency", Model.DataReplicationFrequency))
+            @Html.Raw(F("Peak Time", Model.PeakTime))
+            @Html.Raw(F("Off-Peak Time", Model.OffPeakTime))
+            @Html.Raw(F("Outage Impact", Model.OutageImpact))
+            @Html.Raw(F("Financial Impact", Model.FinancialImpact))
+            @Html.Raw(F("Non-Financial Impact", Model.NonFinancialImpact))
+            @Html.Raw(F("Regulatory / Legal Impact", Model.RegulatoryImpact))
+            @Html.Raw(F("Criticality", Model.Criticality2))
+        </dl></div>
+    </div>
+
+    <div class="card">
+        <div class="card-h">Disaster Recovery &amp; Business Continuity</div>
+        <div class="card-b"><dl class="kv">
+            @Html.Raw(F("Disaster Recovery Required", Model.DisasterRecoveryRequired))
+            @Html.Raw(F("DR Setup Details", Model.DrSetupDetails))
+            @Html.Raw(F("Redundancy @ DR DC", Model.RedundancyDrDc))
+            @Html.Raw(F("Prioritize Resource Recovery", Model.PrioritizeResourceRecovery))
+            @Html.Raw(F("Minimum Hardware", Model.MinimumHardware))
+            @Html.Raw(F("Minimum Hardware 2", Model.MinimumHardware2))
+            @Html.Raw(F("Minimum IT Resources", Model.MinimumItResources))
+            @Html.Raw(F("RTO", Model.Rto))
+            @Html.Raw(F("RPO", Model.Rpo))
+            @Html.Raw(F("MOL", Model.Mol))
+            @Html.Raw(F("Backup Schedule", Model.BackupSchedule))
+            @Html.Raw(F("Bus Unit", Model.BusUnit))
+        </dl></div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-h">Notes</div>
+    <div class="card-b"><div class="notes-body">@(Model.Notes ?? "—")</div></div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-h">Linked scan history (@Model.ScanHosts.Count)</div>
+    <div class="card-b p-0">
+        <table class="table table-sm mb-0">
+            <thead>
+                <tr><th>Scan cycle</th><th>Date</th><th>Crit</th><th>High</th><th>Open</th><th>Total</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var h in Model.ScanHosts.OrderByDescending(x => x.ScanUpload?.ScanDate))
+                {
+                    var bySev = h.Instances.GroupBy(i => i.VulnerabilityFinding!.Severity)
+                        .ToDictionary(g => g.Key, g => g.Count());
+                    var open = h.Instances.Count(i => i.Status == "Open");
+                    <tr>
+                        <td>@h.ScanUpload?.ScanCycleLabel</td>
+                        <td>@(h.ScanUpload?.ScanDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                        <td><span class="sev Critical">@bySev.GetValueOrDefault("Critical")</span></td>
+                        <td><span class="sev High">@bySev.GetValueOrDefault("High")</span></td>
+                        <td>@open</td>
+                        <td>@h.Instances.Count</td>
+                        <td><a class="btn btn-sm btn-outline-primary" asp-controller="Hosts" asp-action="Details" asp-route-id="@h.Id">Open</a></td>
+                    </tr>
+                }
+                @if (Model.ScanHosts.Count == 0)
+                {
+                    <tr><td colspan="7" class="empty">No scan history linked to this asset yet.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

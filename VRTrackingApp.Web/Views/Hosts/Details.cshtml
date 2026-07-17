@@ -1,0 +1,55 @@
+@model VRTrackingApp.Data.Models.AssetHost
+@{
+    var status = (string)ViewBag.Status;
+    var bySev = (Dictionary<string, int>)ViewBag.BySev;
+    var filtered = (List<VRTrackingApp.Data.Models.VulnerabilityInstance>)ViewBag.Filtered;
+}
+
+<div class="page-head">
+    <div>
+        <h1>@Model.HostName</h1>
+        <p class="page-sub">@Model.IpAddress · @Model.OperatingSystem · <span class="src-tag">@Model.ScanUpload?.SourceType</span> @(Model.ScanUpload?.ScanDate?.ToString("yyyy-MM-dd") ?? "")</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index">← All hosts</a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-h">Remediation by severity</div>
+    <div class="card-b">
+        @foreach (var s in new[] { "Critical", "High", "Medium", "Low", "Info" })
+        {
+            if (bySev.ContainsKey(s)) { <span class="sev @s" style="margin-right:6px">@s @bySev[s]</span> }
+        }
+    </div>
+</div>
+
+<form class="toolbar" asp-action="Details" asp-route-id="@Model.Id" method="get">
+    <span class="text-muted small align-self-center">Filter:</span>
+    @foreach (var f in new[] { "All", "Open", "Fixed", "Exception" })
+    {
+        <a class="btn btn-sm @(status == f ? "btn-primary" : "btn-outline-secondary")" asp-action="Details" asp-route-id="@Model.Id" asp-route-status="@f">@f</a>
+    }
+</form>
+
+<div class="card">
+    <div class="card-h">Vulnerabilities (@filtered.Count)</div>
+    <div class="card-b p-0">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Sev</th><th>Plugin</th><th>Finding</th><th>Owner</th><th>Due</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var i in filtered)
+                {
+                    <tr>
+                        <td>@Html.Raw(VRTrackingApp.Web.Html.UiHelpers.Sev(i.VulnerabilityFinding!.Severity))</td>
+                        <td>@i.VulnerabilityFinding.PluginId</td>
+                        <td>@i.VulnerabilityFinding.PluginName</td>
+                        <td>@i.Owner?.DisplayName</td>
+                        <td>@(i.DueDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                        <td>@Html.Raw(VRTrackingApp.Web.Html.UiHelpers.Pill(i.Status))</td>
+                        <td><a class="btn btn-sm btn-outline-primary" asp-controller="Vulnerabilities" asp-action="Details" asp-route-id="@i.Id">Open</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,236 @@
+@model VRTrackingApp.Data.Models.VulnerabilityInstance
+@{
+    var f = Model.VulnerabilityFinding!;
+    var owners = (List<VRTrackingApp.Data.Models.UserAccount>)ViewBag.Owners;
+    var latestJob = ViewBag.LatestJob as VRTrackingApp.Data.Models.RemediationJob;
+    var isCritical = string.Equals(Model.AssetHost?.Asset?.BiaCriticality, "Critical", StringComparison.OrdinalIgnoreCase);
+    var canInstall = User.IsInRole("Admin") || User.IsInRole("Remediation Owner");
+}
+
+<div class="page-head">
+    <div>
+        <h1>Plugin @f.PluginId — @f.PluginName</h1>
+        <p class="page-sub">@Html.Raw(VRTrackingApp.Web.Html.UiHelpers.Sev(f.Severity)) on @Model.AssetHost?.HostName (@Model.AssetHost?.IpAddress)</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index">← Vulnerabilities</a>
+</div>
+
+<div class="detail-grid">
+    <div>
+        <div class="card mb-3">
+            <div class="card-h">Vulnerability detail</div>
+            <div class="card-b">
+                <div class="field"><div class="f-label">Vulnerability ID</div><div class="f-val">Plugin @f.PluginId</div></div>
+                <div class="field"><div class="f-label">CVE</div><div class="f-val">@(f.Cve ?? "Unavailable")</div></div>
+                <div class="field"><div class="f-label">Synopsis</div><div class="f-val">@(f.Synopsis ?? "Unavailable")</div></div>
+                <div class="field"><div class="f-label">Description</div><div class="f-val">@(f.Description ?? "Unavailable")</div></div>
+                <div class="field"><div class="f-label">Solution</div><div class="f-val">@(f.Solution ?? "Unavailable")</div></div>
+                <div class="field"><div class="f-label">Risk Factor</div><div class="f-val">@(f.RiskFactor ?? "Unavailable")</div></div>
+                <div class="field"><div class="f-label">STIG Severity</div><div class="f-val">@(f.StigSeverity ?? "Unavailable")</div></div>
+                <div class="field"><div class="f-label">References</div><div class="f-val">@(f.References ?? "Unavailable")</div></div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-h">Scoring</div>
+            <div class="card-b">
+                <div class="score-grid">
+                    <div class="score-box"><div class="s-val">@(f.CvssV3BaseScore?.ToString("0.0") ?? "—")</div><div class="s-lbl">CVSS v3.0 Base</div></div>
+                    <div class="score-box"><div class="s-val">@(f.CvssV3TemporalScore?.ToString("0.0") ?? "—")</div><div class="s-lbl">CVSS v3.0 Temporal</div></div>
+                    <div class="score-box"><div class="s-val">@(f.CvssV2BaseScore?.ToString("0.0") ?? "—")</div><div class="s-lbl">CVSS v2.0 Base</div></div>
+                    <div class="score-box"><div class="s-val">@(f.CvssV2TemporalScore?.ToString("0.0") ?? "—")</div><div class="s-lbl">CVSS v2.0 Temporal</div></div>
+                    <div class="score-box"><div class="s-val">@(f.VprScore?.ToString("0.0") ?? "—")</div><div class="s-lbl">VPR</div></div>
+                    <div class="score-box"><div class="s-val">@(f.EpssScore?.ToString("0.00") ?? "—")</div><div class="s-lbl">EPSS</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-h">Plugin Output</div>
+            <div class="card-b">
+                <details class="collapse-block">
+                    <summary>Show raw plugin output</summary>
+                    <pre>@(Model.PluginOutput ?? "Unavailable")</pre>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card mb-3">
+            <div class="card-h">Auto-remediation</div>
+            <div class="card-b">
+                @Html.AntiForgeryToken()
+                <div class="field"><div class="f-label">Target host</div><div class="f-val">@Model.AssetHost?.HostName (@Model.AssetHost?.IpAddress)</div></div>
+                <div class="field"><div class="f-label">Operating system</div><div class="f-val">@(Model.AssetHost?.OperatingSystem ?? Model.AssetHost?.Asset?.OperatingSystem ?? "Unknown")</div></div>
+                <div class="field">
+                    <div class="f-label">Asset criticality</div>
+                    <div class="f-val">
+                        @(Model.AssetHost?.Asset?.BiaCriticality ?? "Unknown")
+                        @if (isCritical) { <span class="badge text-bg-danger">Install requires downtime/approval</span> }
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-2">
+                    <button id="btnCheck" class="btn btn-outline-primary" type="button"
+                            data-url="@Url.Action("Check", new { id = Model.Id })">Check on server</button>
+                    @if (canInstall)
+                    {
+                        <button id="btnInstall" class="btn btn-primary" type="button"
+                                data-url="@Url.Action("Remediate", new { id = Model.Id })"
+                                data-critical="@isCritical.ToString().ToLower()">Scan &amp; install</button>
+                    }
+                </div>
+
+                <div id="jobStatus" class="mt-3" style="display:none;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span id="jobSpinner" class="spinner-border spinner-border-sm" role="status" style="display:none;"></span>
+                        <strong id="jobState"></strong>
+                    </div>
+                    <div id="jobSummary" class="small mt-1"></div>
+                    <details class="collapse-block mt-2">
+                        <summary>Show step log</summary>
+                        <pre id="jobLog" style="white-space:pre-wrap;"></pre>
+                    </details>
+                </div>
+
+                @if (latestJob != null)
+                {
+                    <div class="small text-muted mt-2">
+                        Last run: <b>@latestJob.JobType</b> — @latestJob.State
+                        @if (!string.IsNullOrWhiteSpace(latestJob.ResultSummary)) { <text>· @latestJob.ResultSummary</text> }
+                        <span class="t-when">(@latestJob.CreatedAt.ToString("yyyy-MM-dd HH:mm"))</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-h">Remediation action</div>
+            <div class="card-b">
+                @if (Model.ExceptionRecord == null && (Model.Status == "Open" || Model.Status == "Under Review"))
+                {
+                    <a class="btn btn-warning w-100 mb-3" asp-controller="Exceptions" asp-action="RequestForm" asp-route-instanceId="@Model.Id">⏸ Request Exception (approval required)</a>
+                }
+                else if (Model.ExceptionRecord != null)
+                {
+                    <a class="btn btn-outline-secondary w-100 mb-3" asp-controller="Exceptions" asp-action="Details" asp-route-id="@Model.ExceptionRecord.Id">View Exception #@Model.ExceptionRecord.Id</a>
+                }
+                <form method="post" asp-action="UpdateRemediation" asp-route-id="@Model.Id" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-2">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" name="status">
+                            @foreach (var s in new[] { "Open", "Fixed" })
+                            { <option value="@s" selected="@(Model.Status == s ? "selected" : "")">@s</option> }
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Owner</label>
+                        <select class="form-select" name="ownerId">
+                            <option value="">— unassigned —</option>
+                            @foreach (var o in owners)
+                            { <option value="@o.Id" selected="@(Model.OwnerUserId == o.Id ? "selected" : "")">@o.DisplayName</option> }
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Due date</label>
+                        <input type="date" class="form-control" name="dueDate" value="@(Model.DueDate?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Comments</label>
+                        <textarea class="form-control" name="comments" rows="2"></textarea>
+                    </div>
+                    <button class="btn btn-primary w-100">Save remediation</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-h">Change history</div>
+            <div class="card-b">
+                <ul class="timeline">
+                    @foreach (var r in Model.RemediationActions.OrderByDescending(r => r.CreatedAt))
+                    {
+                        <li>
+                            <div><b>@r.Action</b> @Html.Raw(VRTrackingApp.Web.Html.UiHelpers.Pill(r.Status)) — @r.AssignedTo?.DisplayName</div>
+                            <div class="t-when">@r.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div>
+                            @if (!string.IsNullOrWhiteSpace(r.Comments)) { <div class="small">@r.Comments</div> }
+                        </li>
+                    }
+                    @if (Model.RemediationActions.Count == 0) { <li class="text-muted">No changes recorded.</li> }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ---- Auto-remediation ----
+        (function () {
+            const token = document.querySelector('#jobStatus') && document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            const box = document.getElementById('jobStatus');
+            const spinner = document.getElementById('jobSpinner');
+            const stateEl = document.getElementById('jobState');
+            const summaryEl = document.getElementById('jobSummary');
+            const logEl = document.getElementById('jobLog');
+            const btnCheck = document.getElementById('btnCheck');
+            const btnInstall = document.getElementById('btnInstall');
+            const statusUrl = '@Url.Action("JobStatus")';
+
+            function setBusy(busy) {
+                if (btnCheck) btnCheck.disabled = busy;
+                if (btnInstall) btnInstall.disabled = busy;
+                spinner.style.display = busy ? '' : 'none';
+            }
+
+            async function start(url) {
+                box.style.display = '';
+                setBusy(true);
+                stateEl.textContent = 'Queued...';
+                summaryEl.textContent = '';
+                logEl.textContent = '';
+                try {
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'RequestVerificationToken': token }
+                    });
+                    if (!res.ok) { stateEl.textContent = 'Failed to start (HTTP ' + res.status + ')'; setBusy(false); return; }
+                    const data = await res.json();
+                    poll(data.jobId);
+                } catch (e) {
+                    stateEl.textContent = 'Error: ' + e;
+                    setBusy(false);
+                }
+            }
+
+            async function poll(jobId) {
+                try {
+                    const res = await fetch(statusUrl + '?jobId=' + jobId);
+                    const j = await res.json();
+                    stateEl.textContent = j.jobType + ': ' + j.state;
+                    summaryEl.textContent = j.resultSummary || '';
+                    logEl.textContent = j.log || '';
+                    if (j.done) {
+                        setBusy(false);
+                        // If an install succeeded, refresh so the status field updates.
+                        if (j.jobType === 'Install' && j.state === 'Succeeded') {
+                            setTimeout(() => location.reload(), 1500);
+                        }
+                        return;
+                    }
+                } catch (e) { /* keep polling */ }
+                setTimeout(() => poll(jobId), 1200);
+            }
+
+            if (btnCheck) btnCheck.addEventListener('click', () => start(btnCheck.dataset.url));
+            if (btnInstall) btnInstall.addEventListener('click', () => {
+                const msg = btnInstall.dataset.critical === 'true'
+                    ? 'This is a CRITICAL asset. Installs are blocked and will be flagged for approval/downtime. Continue?'
+                    : 'Trigger scan & install of the patch on the target server?';
+                if (confirm(msg)) start(btnInstall.dataset.url);
+            });
+        })();
+    </script>
+}

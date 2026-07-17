@@ -1,0 +1,445 @@
+@model VRTrackingApp.Data.Models.VulnerabilityInstance
+@{
+    var f = Model.VulnerabilityFinding!;
+    var host = Model.AssetHost;
+    var asset = host?.Asset;
+    var scan = host?.ScanUpload;
+    var owners = (List<VRTrackingApp.Data.Models.UserAccount>)ViewBag.Owners;
+    var stage1 = (string)ViewBag.Stage1Role;
+}
+<div class="page-head">
+    <div>
+        <h1>Request Exception</h1>
+        <p class="page-sub">Submit a vulnerability exception for approval — @(VRTrackingApp.Web.Services.Exceptions.ExceptionRoutingService.RoleLabel(stage1)) review first</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-controller="Vulnerabilities" asp-action="Details" asp-route-id="@Model.Id">← Back</a>
+</div>
+
+<div class="wizard" id="reqWizard" data-instance="@Model.Id">
+    <!-- Stepper -->
+    <ol class="stepper" id="stepper">
+        <li class="step" data-step="0"><span class="step-no">1</span><span class="step-lbl">Vulnerability</span></li>
+        <li class="step" data-step="1"><span class="step-no">2</span><span class="step-lbl">Justification</span></li>
+        <li class="step" data-step="2"><span class="step-no">3</span><span class="step-lbl">Risk &amp; Controls</span></li>
+        <li class="step" data-step="3"><span class="step-no">4</span><span class="step-lbl">Evidence &amp; Validity</span></li>
+        <li class="step" data-step="4"><span class="step-no">5</span><span class="step-lbl">Review &amp; Submit</span></li>
+    </ol>
+
+    <div class="wizard-bar d-flex align-items-center gap-2 mb-3">
+        <span id="draftStatus" class="text-muted small"></span>
+        <button type="button" class="btn btn-outline-secondary btn-sm ms-auto" id="clearDraft">Clear draft</button>
+    </div>
+
+    <form method="post" asp-controller="Exceptions" asp-action="Create" asp-route-instanceId="@Model.Id" enctype="multipart/form-data" id="reqForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="instanceId" value="@Model.Id" />
+
+        <!-- Step 1: Vulnerability Information (auto-populated, read-only) -->
+        <section class="wizard-step" data-step="0">
+            <div class="card mb-3">
+                <div class="card-h">Section 1 — Vulnerability Information <span class="card-h-sub">auto-populated · read-only</span></div>
+                <div class="card-b">
+                    <div class="field-grid">
+                        <div class="field"><div class="f-label">Plugin ID</div><div class="f-val">@f.PluginId</div></div>
+                        <div class="field"><div class="f-label">Plugin Name</div><div class="f-val">@f.PluginName</div></div>
+                        <div class="field"><div class="f-label">CVE</div><div class="f-val">@(f.Cve ?? "Unavailable")</div></div>
+                        <div class="field"><div class="f-label">CVSS Score</div><div class="f-val">@(f.CvssV3BaseScore?.ToString("0.0") ?? "Unavailable")</div></div>
+                        <div class="field"><div class="f-label">Severity</div><div class="f-val">@Html.Raw(VRTrackingApp.Web.Html.UiHelpers.Sev(f.Severity))</div></div>
+                        <div class="field"><div class="f-label">Published Date</div><div class="f-val">Unavailable</div></div>
+                        <div class="field"><div class="f-label">Last Seen</div><div class="f-val">@(Model.LastFound?.ToString("yyyy-MM-dd") ?? "Unavailable")</div></div>
+                        <div class="field"><div class="f-label">Host</div><div class="f-val">@(host?.HostName ?? "Unavailable")</div></div>
+                        <div class="field"><div class="f-label">IP Address</div><div class="f-val">@(host?.IpAddress ?? "Unavailable")</div></div>
+                        <div class="field"><div class="f-label">Operating System</div><div class="f-val">@(host?.OperatingSystem ?? asset?.OperatingSystem ?? "Unavailable")</div></div>
+                        <div class="field"><div class="f-label">Port</div><div class="f-val">@(Model.Port?.ToString() ?? "Unavailable")</div></div>
+                        <div class="field"><div class="f-label">Protocol</div><div class="f-val">@(Model.Protocol ?? "Unavailable")</div></div>
+                        <div class="field"><div class="f-label">Asset Name</div><div class="f-val">@(asset?.HostName ?? "Unavailable")</div></div>
+                        <div class="field"><div class="f-label">Business Owner</div><div class="f-val">@(asset?.BusinessOwner ?? "Unavailable")</div></div>
+                        <div class="field"><div class="f-label">Technical Owner</div><div class="f-val">@(asset?.AssetOwner ?? asset?.InternalPoc ?? "Unavailable")</div></div>
+                        <div class="field"><div class="f-label">Scan Date</div><div class="f-val">@(scan?.ScanDate?.ToString("yyyy-MM-dd") ?? "Unavailable")</div></div>
+                        <div class="field"><div class="f-label">Nessus Report</div><div class="f-val">@(scan?.FileName ?? "Unavailable")</div></div>
+                    </div>
+                    <details class="collapse-block mt-2">
+                        <summary>Show plugin output</summary>
+                        <pre>@(Model.PluginOutput ?? "Unavailable")</pre>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2: Why Not Fixable + Technical + Business -->
+        <section class="wizard-step" data-step="1">
+            <div class="card mb-3">
+                <div class="card-h">Section 2 — Why is it Not Fixable?</div>
+                <div class="card-b">
+                    <div class="mb-2">
+                        <select class="form-select" name="nonFixableReason" id="reason" required>
+                            <option value="">— select a reason —</option>
+                            @foreach (var v in Enum.GetValues<VRTrackingApp.Data.Models.NonFixableReason>())
+                            { <option value="@v">@v.Humanize()</option> }
+                        </select>
+                        <div class="invalid-feedback">Please select a reason.</div>
+                    </div>
+                    <div class="mb-2" id="otherBox" style="display:none;">
+                        <label class="form-label">Describe reason</label>
+                        <input type="text" class="form-control" name="otherReasonText" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Summary reason / justification</label>
+                        <textarea class="form-control" name="reason" rows="2" required></textarea>
+                        <div class="invalid-feedback">A justification / reason is required.</div>
+                        @Html.ValidationMessage("reason")
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-h">Section 3 — Technical Justification</div>
+                <div class="card-b">
+                    <textarea class="form-control" name="technicalJustification" rows="4" placeholder="Windows Server 2012 hosts a manufacturing application. Vendor does not support latest patch…"></textarea>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-h">Section 4 — Business Justification</div>
+                <div class="card-b">
+                    <div class="field-grid">
+                        <div class="field"><div class="f-label">Why can't downtime be scheduled?</div><textarea class="form-control" name="downtimeConstraint" rows="2"></textarea></div>
+                        <div class="field"><div class="f-label">Business impact if patched?</div><textarea class="form-control" name="businessImpact" rows="2"></textarea></div>
+                        <div class="field"><div class="f-label">Cost?</div><textarea class="form-control" name="costImpact" rows="2"></textarea></div>
+                        <div class="field"><div class="f-label">Production impact?</div><textarea class="form-control" name="productionImpact" rows="2"></textarea></div>
+                        <div class="field"><div class="f-label">Customer impact?</div><textarea class="form-control" name="customerImpact" rows="2"></textarea></div>
+                        <div class="field"><div class="f-label">Compliance impact?</div><textarea class="form-control" name="complianceImpact" rows="2"></textarea></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3: Risk Assessment + CIA + Exploitability + Controls + Mitigation -->
+        <section class="wizard-step" data-step="2">
+            <div class="card mb-3">
+                <div class="card-h">Section 5 — Risk Assessment</div>
+                <div class="card-b">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Likelihood</label>
+                            <select class="form-select" name="likelihood" id="likelihood">
+                                <option value="">—</option>
+                                @foreach (var v in Enum.GetValues<VRTrackingApp.Data.Models.Likelihood>()) { <option value="@v">@v.Humanize()</option> }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Impact</label>
+                            <select class="form-select" name="impact" id="impact">
+                                <option value="">—</option>
+                                @foreach (var v in Enum.GetValues<VRTrackingApp.Data.Models.ImpactLevel>()) { <option value="@v">@v.Humanize()</option> }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Overall Risk (auto)</label>
+                            <input class="form-control" id="overallRisk" value="—" readonly />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Owner (exception owner)</label>
+                            <select class="form-select" name="ownerUserId">
+                                <option value="">— unassigned —</option>
+                                @foreach (var o in owners) { <option value="@o.Id">@o.DisplayName</option> }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-h">Section 6 — CIA Impact</div>
+                <div class="card-b d-flex gap-4">
+                    <div class="form-check"><input class="form-check-input" type="checkbox" name="affectsConfidentiality" id="c" /><label class="form-check-label" for="c">Confidentiality</label></div>
+                    <div class="form-check"><input class="form-check-input" type="checkbox" name="affectsIntegrity" id="i" /><label class="form-check-label" for="i">Integrity</label></div>
+                    <div class="form-check"><input class="form-check-input" type="checkbox" name="affectsAvailability" id="a" /><label class="form-check-label" for="a">Availability</label></div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-h">Section 7 &amp; 8 — Exploitability &amp; Internet Exposure</div>
+                <div class="card-b">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Exploitability</label>
+                            <select class="form-select" name="exploitability">
+                                <option value="">—</option>
+                                @foreach (var v in Enum.GetValues<VRTrackingApp.Data.Models.Exploitability>()) { <option value="@v">@v.Humanize()</option> }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Internet Exposure</label>
+                            <select class="form-select" name="internetExposure">
+                                <option value="">—</option>
+                                @foreach (var v in Enum.GetValues<VRTrackingApp.Data.Models.InternetExposure>()) { <option value="@v">@v.Humanize()</option> }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-h">Section 9 — Existing Security Controls</div>
+                <div class="card-b">
+                    <div class="control-grid">
+                        @foreach (var c in VRTrackingApp.Data.Models.ExceptionCatalogs.SecurityControls)
+                        {
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="controls" value="@c" id="ctl-@c" /><label class="form-check-label" for="ctl-@c">@c</label></div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-h">Section 10 — Mitigation <span class="card-h-sub">add one row per control</span></div>
+                <div class="card-b">
+                    <div id="mitRows">
+                        <div class="row g-2 mb-2 mit-row">
+                            <div class="col"><input class="form-control" name="mitigations" placeholder="Mitigation (e.g. Disable SMBv1)" /></div>
+                            <div class="col-3"><select class="form-select" name="mitigationStatus"><option value="Planned">Planned</option><option value="Pending">Pending</option><option value="Implemented">Implemented</option></select></div>
+                            <div class="col-1"><button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('.mit-row').remove()">✕</button></div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="addMit">+ Add mitigation</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 4: Evidence Upload + Validity -->
+        <section class="wizard-step" data-step="3">
+            <div class="card mb-3">
+                <div class="card-h">Section 11 — Evidence Upload</div>
+                <div class="card-b">
+                    <div class="ev-upload">
+                        <div class="ev-file">
+                            <input type="file" id="reqFile" class="form-control form-control-sm" name="evidence" multiple
+                                   onchange="renderReqFiles(this)" />
+                            <label id="reqFileLabel" for="reqFile" class="ev-file-label">Choose files or drop here…</label>
+                        </div>
+                        <select class="form-select form-select-sm ev-type" name="evidenceType" aria-label="Evidence type">
+                            @foreach (var v in Enum.GetValues<VRTrackingApp.Data.Models.EvidenceType>()) { <option value="@v">@v.Humanize()</option> }
+                        </select>
+                    </div>
+                    <ul class="ev-grid mt-2" id="reqFileList"></ul>
+                    <div class="form-text">Additional evidence can be attached after submission on the exception detail page.</div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-h">Section 13 — Validity</div>
+                <div class="card-b">
+                    <div class="row g-3">
+                        <div class="col-md-4"><label class="form-label">Expiry Date</label><input type="date" class="form-control" name="expiryDate" /></div>
+                        <div class="col-md-4">
+                            <label class="form-label">Review Frequency</label>
+                            <select class="form-select" name="reviewFrequencyDays">
+                                <option value="30">30 Days</option>
+                                <option value="90" selected>90 Days</option>
+                                <option value="180">180 Days</option>
+                                <option value="365">365 Days</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 5: Review & Submit -->
+        <section class="wizard-step" data-step="4">
+            <div class="card mb-3">
+                <div class="card-h">Review your request</div>
+                <div class="card-b">
+                    <div id="reviewSummary" class="notes-block"></div>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-h">Submit</div>
+                <div class="card-b">
+                    <div class="mb-2"><label class="form-label">Comment (optional)</label><textarea class="form-control" name="comment" rows="2"></textarea></div>
+                    <button type="submit" class="btn btn-primary w-100" id="submitBtn">Submit Exception Request</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Wizard nav -->
+        <div class="wizard-nav d-flex justify-content-between gap-2">
+            <button type="button" class="btn btn-outline-secondary" id="btnBack" disabled>← Back</button>
+            <button type="button" class="btn btn-primary" id="btnNext">Next →</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        const reason = document.getElementById('reason');
+        const otherBox = document.getElementById('otherBox');
+        reason.addEventListener('change', () => { otherBox.style.display = reason.value === 'Other' ? '' : 'none'; });
+
+        function calcRisk() {
+            const lk = document.getElementById('likelihood').value;
+            const im = document.getElementById('impact').value;
+            const map = { VeryLow: 0, Low: 1, Medium: 2, High: 3, Critical: 4 };
+            const mtx = [
+                ['Low', 'Low', 'Medium', 'High'],
+                ['Low', 'Medium', 'Medium', 'High'],
+                ['Low', 'Medium', 'High', 'High'],
+                ['Medium', 'High', 'High', 'Critical'],
+                ['High', 'High', 'Critical', 'Critical']
+            ];
+            const box = document.getElementById('overallRisk');
+            if (lk && im) box.value = mtx[map[lk]][map[im]];
+            else box.value = '—';
+        }
+        document.getElementById('likelihood').addEventListener('change', calcRisk);
+        document.getElementById('impact').addEventListener('change', calcRisk);
+
+        function renderReqFiles(input) {
+            const label = document.getElementById('reqFileLabel');
+            const list = document.getElementById('reqFileList');
+            if (!input.files || !input.files.length) {
+                label.textContent = 'Choose files or drop here…';
+                list.innerHTML = '';
+                return;
+            }
+            label.textContent = Array.from(input.files).map(f => f.name).join(', ');
+            list.innerHTML = '';
+            for (const f of input.files) {
+                const li = document.createElement('li');
+                li.className = 'ev-item';
+                const kb = f.size ? Math.max(1, Math.round(f.size / 1024)) + ' KB' : '';
+                li.innerHTML = '<div class="ev-ico">📄</div>' +
+                    '<div class="ev-meta"><div class="ev-name">' + f.name + '</div>' +
+                    '<div class="ev-sub">' + kb + '</div></div>';
+                list.appendChild(li);
+            }
+        }
+
+        document.getElementById('addMit').addEventListener('click', () => {
+            const wrap = document.getElementById('mitRows');
+            const row = document.createElement('div');
+            row.className = 'row g-2 mb-2 mit-row';
+            row.innerHTML = '<div class="col"><input class="form-control" name="mitigations" placeholder="Mitigation" /></div>' +
+                '<div class="col-3"><select class="form-select" name="mitigationStatus"><option value="Planned">Planned</option><option value="Pending">Pending</option><option value="Implemented">Implemented</option></select></div>' +
+                '<div class="col-1"><button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest(\'.mit-row\').remove()">✕</button></div>';
+            wrap.appendChild(row);
+        });
+
+        // ---- Wizard engine ----
+        (function () {
+            const wizard = document.getElementById('reqWizard');
+            const form = document.getElementById('reqForm');
+            const steps = Array.from(form.querySelectorAll('.wizard-step'));
+            const stepEls = Array.from(document.querySelectorAll('#stepper .step'));
+            const btnNext = document.getElementById('btnNext');
+            const btnBack = document.getElementById('btnBack');
+            const draftStatus = document.getElementById('draftStatus');
+            const clearBtn = document.getElementById('clearDraft');
+            const key = 'reqDraft:' + wizard.dataset.instance;
+            let current = 0;
+
+            function show(i) {
+                current = Math.max(0, Math.min(steps.length - 1, i));
+                steps.forEach((s, idx) => s.style.display = idx === current ? '' : 'none');
+                stepEls.forEach((s, idx) => {
+                    s.classList.toggle('active', idx === current);
+                    s.classList.toggle('done', idx < current);
+                });
+                btnBack.disabled = current === 0;
+                btnNext.textContent = current === steps.length - 1 ? 'Submit →' : 'Next →';
+                if (current === steps.length - 1) buildReview();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            function validateStep(i) {
+                const fields = steps[i].querySelectorAll('input, select, textarea');
+                let ok = true;
+                fields.forEach(el => {
+                    if (el.checkValidity && !el.checkValidity()) { ok = false; el.classList.add('is-invalid'); }
+                    else el.classList.remove('is-invalid');
+                });
+                if (!ok && window.showToast) showToast('Please complete the required fields.', 'warning');
+                return ok;
+            }
+
+            function buildReview() {
+                const get = n => { const el = form.querySelector('[name="' + n + '"]'); return el ? (el.value || '') : ''; };
+                const checks = (name) => Array.from(form.querySelectorAll('[name="' + name + '"]:checked')).map(c => c.value);
+                const rows = [
+                    ['Reason', get('nonFixableReason') || '—'],
+                    ['Justification', get('reason') || '—'],
+                    ['Likelihood', get('likelihood') || '—'],
+                    ['Impact', get('impact') || '—'],
+                    ['Overall Risk', document.getElementById('overallRisk').value],
+                    ['Owner', (form.querySelector('[name="ownerUserId"]')?.selectedOptions[0]?.textContent?.trim()) || '—'],
+                    ['CIA', checks('affectsConfidentiality').length + checks('affectsIntegrity').length + checks('affectsAvailability').length + ' selected'],
+                    ['Controls', checks('controls').length + ' selected'],
+                    ['Mitigations', Array.from(form.querySelectorAll('[name="mitigations"]')).filter(m => m.value).length + ' entered'],
+                    ['Evidence files', (document.getElementById('reqFile')?.files?.length || 0) + ' attached'],
+                    ['Review frequency', get('reviewFrequencyDays') + ' days']
+                ];
+                document.getElementById('reviewSummary').innerHTML =
+                    '<dl class="kv">' + rows.map(r => '<dt>' + r[0] + '</dt><dd>' + String(r[1]).replace(/</g, '&lt;') + '</dd>').join('') + '</dl>';
+            }
+
+            // ---- Draft autosave ----
+            let saveTimer = null;
+            function saveDraft() {
+                const data = {};
+                form.querySelectorAll('input, select, textarea').forEach(el => {
+                    if (el.type === 'file') return;
+                    if (el.type === 'checkbox') data[el.name + (el.value ? '#' + el.value : '')] = el.checked;
+                    else if (el.type === 'radio') { if (el.checked) data[el.name] = el.value; }
+                    else if (el.name) data[el.name] = el.value;
+                });
+                try {
+                    localStorage.setItem(key, JSON.stringify({ step: current, data, ts: Date.now() }));
+                    draftStatus.textContent = 'Draft saved ' + new Date().toLocaleTimeString();
+                } catch (e) { /* storage disabled */ }
+            }
+            function restoreDraft() {
+                let raw;
+                try { raw = localStorage.getItem(key); } catch (e) { return; }
+                if (!raw) return;
+                let saved;
+                try { saved = JSON.parse(raw); } catch (e) { return; }
+                const data = saved.data || {};
+                form.querySelectorAll('input, select, textarea').forEach(el => {
+                    if (el.type === 'file') return;
+                    if (el.type === 'checkbox') {
+                        const hit = data[el.name + (el.value ? '#' + el.value : '')];
+                        if (hit !== undefined) el.checked = hit;
+                    } else if (el.type === 'radio') {
+                        if (data[el.name] === el.value) el.checked = true;
+                    } else if (el.name && data[el.name] !== undefined) {
+                        el.value = data[el.name];
+                    }
+                });
+                if (reason) reason.dispatchEvent(new Event('change'));
+                calcRisk();
+                if (typeof saved.step === 'number') show(saved.step);
+                draftStatus.textContent = 'Draft restored';
+            }
+            form.addEventListener('input', () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveDraft, 600); });
+            form.addEventListener('change', () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveDraft, 600); });
+            clearBtn.addEventListener('click', () => {
+                localStorage.removeItem(key);
+                draftStatus.textContent = 'Draft cleared';
+                show(0);
+            });
+
+            btnNext.addEventListener('click', () => {
+                if (!validateStep(current)) return;
+                if (current === steps.length - 1) { form.requestSubmit(); return; }
+                show(current + 1);
+                saveDraft();
+            });
+            btnBack.addEventListener('click', () => show(current - 1));
+
+            // init
+            show(0);
+            restoreDraft();
+        })();
+    </script>
+}

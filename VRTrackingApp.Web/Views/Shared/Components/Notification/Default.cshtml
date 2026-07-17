@@ -1,0 +1,29 @@
+@{
+    var unread = (int)ViewBag.Unread;
+    var recent = (System.Collections.Generic.List<VRTrackingApp.Data.Models.Notification>)ViewBag.Recent;
+}
+<div class="dropdown">
+    <a class="badge rounded-pill text-bg-warning notif-bell" href="/Notification" title="Notifications" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+        🔔 @unread
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end notif-menu">
+        @if (recent.Count == 0)
+        {
+            <li class="dropdown-item text-muted">No notifications</li>
+        }
+        else
+        {
+            @foreach (var n in recent)
+            {
+                <li>
+                    <a class="dropdown-item @(n.IsRead ? "" : "fw-bold")" href="@(n.ExceptionRecordId != null ? "/Exceptions/Details/" + n.ExceptionRecordId : "/Notification")">
+                        <div>@n.Title</div>
+                        <small class="text-muted">@n.CreatedAt.ToString("yyyy-MM-dd HH:mm")@(n.IsRead ? "" : " · new")</small>
+                    </a>
+                </li>
+            }
+            <li><hr class="dropdown-divider" /></li>
+            <li><a class="dropdown-item" href="/Notification">View all</a></li>
+        }
+    </ul>
+</div>

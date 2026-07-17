@@ -1,0 +1,43 @@
+@model VRTrackingApp.Web.Controllers.SearchController.SearchResult
+@{
+    var q = Context.Request.Query["q"].ToString();
+}
+
+<div class="page-head">
+    <div><h1>Search</h1><p class="page-sub">Results for “@q”</p></div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-h">Hosts (@Model.Hosts.Count)</div>
+    <div class="card-b p-0">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Host</th><th>IP</th><th>OS</th></tr></thead>
+            <tbody>
+                @foreach (var h in Model.Hosts)
+                { <tr><td><a asp-controller="Hosts" asp-action="Details" asp-route-id="@h.Id">@h.HostName</a></td><td>@h.IpAddress</td><td>@h.OperatingSystem</td></tr> }
+                @if (Model.Hosts.Count == 0) { <tr><td colspan="3" class="empty">No hosts.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-h">Vulnerabilities (@Model.Instances.Count)</div>
+    <div class="card-b p-0">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Sev</th><th>Finding</th><th>Host</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var i in Model.Instances)
+                {
+                    <tr>
+                        <td>@Html.Raw(VRTrackingApp.Web.Html.UiHelpers.Sev(i.VulnerabilityFinding!.Severity))</td>
+                        <td>@i.VulnerabilityFinding.PluginName</td>
+                        <td>@i.AssetHost?.HostName</td>
+                        <td><a class="btn btn-sm btn-outline-primary" asp-controller="Vulnerabilities" asp-action="Details" asp-route-id="@i.Id">Open</a></td>
+                    </tr>
+                }
+                @if (Model.Instances.Count == 0) { <tr><td colspan="4" class="empty">No findings.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>

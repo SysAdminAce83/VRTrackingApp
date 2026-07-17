@@ -1,0 +1,101 @@
+@model IEnumerable<VRTrackingApp.Data.Models.ExceptionRecord>
+@using VRTrackingApp.Data.Models
+@{
+    var kpi = (Dictionary<string, int>)(ViewData["Kpi"] ?? new Dictionary<string, int>());
+}
+<div id="exceptionsRegion">
+<div class="kpi-row mb-3">
+    <div class="kpi-card"><div class="kpi-val">@kpi["Active"]</div><div class="kpi-lbl">Active</div></div>
+    <div class="kpi-card kpi-warn"><div class="kpi-val">@kpi["Pending"]</div><div class="kpi-lbl">Pending Approval</div></div>
+    <div class="kpi-card kpi-danger"><div class="kpi-val">@kpi["Critical"]</div><div class="kpi-lbl">Critical Exceptions</div></div>
+    <div class="kpi-card kpi-warn"><div class="kpi-val">@kpi["Expiring30"]</div><div class="kpi-lbl">Expiring &lt;30d</div></div>
+    <div class="kpi-card"><div class="kpi-val">@kpi["Expired"]</div><div class="kpi-lbl">Expired</div></div>
+    <div class="kpi-card kpi-danger"><div class="kpi-val">@kpi["Rejected"]</div><div class="kpi-lbl">Rejected</div></div>
+    <div class="kpi-card"><div class="kpi-val">@kpi["Closed"]</div><div class="kpi-lbl">Closed</div></div>
+</div>
+
+<form method="get" class="toolbar mb-3" data-ajax="true" data-ajax-target="#exceptionsRegion">
+    <select name="status" class="form-select form-select-sm" onchange="this.form.requestSubmit()">
+        <option value="All" selected="@(ViewBag.Status == "All" || ViewBag.Status == null ? "selected" : "")">All statuses</option>
+        @foreach (var s in Enum.GetValues<ExceptionStatus>())
+        { <option value="@s" selected="@(ViewBag.Status == s.ToString() ? "selected" : "")">@VRTrackingApp.Data.Models.ExceptionStatusLabels.For(s)</option> }
+    </select>
+    <select name="severity" class="form-select form-select-sm" onchange="this.form.requestSubmit()">
+        <option value="All" selected="@(ViewBag.Severity == "All" || ViewBag.Severity == null ? "selected" : "")">All severities</option>
+        @foreach (var s in new[] { "Critical", "High", "Medium", "Low", "Info" })
+        { <option value="@s" selected="@(ViewBag.Severity == s ? "selected" : "")">@s</option> }
+    </select>
+    <select name="risk" class="form-select form-select-sm" onchange="this.form.requestSubmit()">
+        <option value="All" selected="@(ViewBag.Risk == "All" || ViewBag.Risk == null ? "selected" : "")">All risk</option>
+        @foreach (var r in Enum.GetValues<RiskLevel>())
+        { <option value="@r" selected="@(ViewBag.Risk == r.ToString() ? "selected" : "")">@r.Humanize()</option> }
+    </select>
+    <a class="btn btn-outline-secondary btn-sm" href="@Url.Action("Index")">Reset</a>
+</form>
+
+<div class="card admin-card-wide">
+    <div class="card-h"><span>Exceptions</span><span class="card-h-sub">@Model.Count() shown</span></div>
+    <div class="card-b p-0">
+        <div class="table-scroll table-scroll-wide">
+            <table class="table table-sm mb-0 align-middle">
+                <thead>
+                    <tr><th>ID</th><th>Host</th><th>Finding</th><th>Severity</th><th>Risk</th><th>Owner</th><th>First Approver</th><th>Expiry</th><th>Status</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in Model)
+                    {
+                        var f = e.VulnerabilityInstance?.VulnerabilityFinding;
+                        var host = e.VulnerabilityInstance?.AssetHost;
+                        <tr>
+                            <td class="fw-600">#@e.Id</td>
+                            <td>@(host?.HostName ?? "—")</td>
+                            <td>@(f?.PluginName ?? "—")</td>
+                            <td>@Html.Raw(VRTrackingApp.Web.Html.UiHelpers.Sev(f?.Severity))</td>
+                            <td>@RiskBadge(e.OverallRisk)</td>
+                            <td class="text-muted">@(e.Owner?.DisplayName ?? "Unassigned")</td>
+                            <td class="text-muted">@VRTrackingApp.Web.Services.Exceptions.ExceptionRoutingService.RoleLabel(e.Stage1Role ?? "—")</td>
+                            <td class="text-muted">@(e.ExpiryDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                            <td>@StatusBadge(e.Status)</td>
+                            <td><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@e.Id">View</a></td>
+                        </tr>
+                    }
+                    @if (!Model.Any()) { <tr><td colspan="10" class="empty">No exceptions match the filter.</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>
+
+@functions {
+    static Microsoft.AspNetCore.Html.IHtmlContent StatusBadge(ExceptionStatus s)
+    {
+        var cls = s switch
+        {
+            ExceptionStatus.ActiveException => "st-active",
+            ExceptionStatus.Renewed => "st-active",
+            ExceptionStatus.PendingTechnicalApproval or ExceptionStatus.PendingManagerApproval or ExceptionStatus.PendingSecurityApproval => "st-pending",
+            ExceptionStatus.ExceptionRequested or ExceptionStatus.UnderReview or ExceptionStatus.Detected => "st-pending",
+            ExceptionStatus.ReviewDue => "st-warn",
+            ExceptionStatus.Expired => "st-expired",
+            ExceptionStatus.Rejected => "st-rejected",
+            ExceptionStatus.Closed => "st-closed",
+            ExceptionStatus.NeedMoreInfo => "st-warn",
+            _ => "st-closed"
+        };
+        return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"status-badge {cls}\">{VRTrackingApp.Data.Models.ExceptionStatusLabels.For(s)}</span>");
+    }
+
+    static Microsoft.AspNetCore.Html.IHtmlContent RiskBadge(RiskLevel? r)
+    {
+        if (r == null) return new Microsoft.AspNetCore.Html.HtmlString("<span class=\"text-muted\">—</span>");
+        var cls = r switch
+        {
+            RiskLevel.Low => "risk-low",
+            RiskLevel.Medium => "risk-medium",
+            RiskLevel.High => "risk-high",
+            _ => "risk-critical"
+        };
+        return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"risk-badge {cls}\">{r}</span>");
+    }
+}
