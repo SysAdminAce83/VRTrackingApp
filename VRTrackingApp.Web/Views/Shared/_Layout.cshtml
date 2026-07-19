@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>try{var t=localStorage.getItem("theme");if(t){document.documentElement.setAttribute("data-theme",t);}else if(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches){document.documentElement.setAttribute("data-theme","dark");}}catch(e){}</script>
     <title>@(ViewData["Title"]?.ToString() ?? "VR Console") — Vuln Remediation Console</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -67,6 +68,7 @@
                     </select>
                     <input type="date" class="form-control form-control-sm" id="dateFilter" title="Date filter" />
                 </div>
+                <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌓</button>
                 <div class="topbar-user">
                     @await Component.InvokeAsync("Notification")
                     @if (Context.User.Identity?.IsAuthenticated == true)
@@ -89,6 +91,7 @@
         </div>
     </div>
 
+@await Html.PartialAsync("_ShortcutHelp")
     @await Html.PartialAsync("_ToastContainer")
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

@@ -37,25 +37,32 @@
     <div class="card-h"><span>Exceptions</span><span class="card-h-sub">@Model.Count() shown</span></div>
     <div class="card-b p-0">
         <div class="table-scroll table-scroll-wide">
-            <table class="table table-sm mb-0 align-middle">
+        <div class="table-scroll table-scroll-wide">
+            <table class="table table-sm mb-0 align-middle" data-sortable>
                 <thead>
-                    <tr><th>ID</th><th>Host</th><th>Finding</th><th>Severity</th><th>Risk</th><th>Owner</th><th>First Approver</th><th>Expiry</th><th>Status</th><th></th></tr>
+                    <tr><th data-sort="0" data-sort-label="ID">ID</th><th data-sort="1" data-sort-label="Host">Host</th><th data-sort="2" data-sort-label="Finding">Finding</th><th data-sort="sev" data-sort-label="Severity">Severity</th><th data-sort="risk" data-sort-label="Risk">Risk</th><th data-sort="5" data-sort-label="Owner">Owner</th><th data-sort="6" data-sort-label="First Approver">First Approver</th><th data-sort="exp" data-sort-label="Expiry">Expiry</th><th data-sort="st" data-sort-label="Status">Status</th><th></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var e in Model)
                     {
                         var f = e.VulnerabilityInstance?.VulnerabilityFinding;
                         var host = e.VulnerabilityInstance?.AssetHost;
+                        var sevRank = new Dictionary<string,int>{["Critical"]=4,["High"]=3,["Medium"]=2,["Low"]=1,["Info"]=0,["None"]=0,[""]=0};
+                        var riskRank = new Dictionary<string,int>{["Critical"]=4,["High"]=3,["Medium"]=2,["Low"]=1,[""]=0};
+                        var sevKey = sevRank.TryGetValue(f?.Severity ?? "", out var sk) ? sk : 0;
+                        var riskKey = riskRank.TryGetValue(e.OverallRisk?.ToString() ?? "", out var rk) ? rk : 0;
+                        var stKey = e.Status.ToString();
+                        var expKey = e.ExpiryDate?.ToString("yyyy-MM-dd") ?? "9999-12-31";
                         <tr>
-                            <td class="fw-600">#@e.Id</td>
-                            <td>@(host?.HostName ?? "—")</td>
-                            <td>@(f?.PluginName ?? "—")</td>
-                            <td>@Html.Raw(VRTrackingApp.Web.Html.UiHelpers.Sev(f?.Severity))</td>
-                            <td>@RiskBadge(e.OverallRisk)</td>
-                            <td class="text-muted">@(e.Owner?.DisplayName ?? "Unassigned")</td>
-                            <td class="text-muted">@VRTrackingApp.Web.Services.Exceptions.ExceptionRoutingService.RoleLabel(e.Stage1Role ?? "—")</td>
-                            <td class="text-muted">@(e.ExpiryDate?.ToString("yyyy-MM-dd") ?? "—")</td>
-                            <td>@StatusBadge(e.Status)</td>
+                            <td class="fw-600" data-key="0">#@e.Id</td>
+                            <td data-key="1">@(host?.HostName ?? "—")</td>
+                            <td data-key="2">@(f?.PluginName ?? "—")</td>
+                            <td data-key="@sevKey">@Html.Raw(VRTrackingApp.Web.Html.UiHelpers.Sev(f?.Severity))</td>
+                            <td data-key="@riskKey">@VRTrackingApp.Web.Html.UiHelpers.RiskBadge(e.OverallRisk)</td>
+                            <td class="text-muted" data-key="5">@(e.Owner?.DisplayName ?? "Unassigned")</td>
+                            <td class="text-muted" data-key="6">@VRTrackingApp.Web.Services.Exceptions.ExceptionRoutingService.RoleLabel(e.Stage1Role ?? "—")</td>
+                            <td class="text-muted" data-key="@expKey">@(e.ExpiryDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                            <td data-key="@stKey">@VRTrackingApp.Web.Html.UiHelpers.StatusBadge(e.Status)</td>
                             <td><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@e.Id">View</a></td>
                         </tr>
                     }
@@ -67,35 +74,3 @@
 </div>
 </div>
 
-@functions {
-    static Microsoft.AspNetCore.Html.IHtmlContent StatusBadge(ExceptionStatus s)
-    {
-        var cls = s switch
-        {
-            ExceptionStatus.ActiveException => "st-active",
-            ExceptionStatus.Renewed => "st-active",
-            ExceptionStatus.PendingTechnicalApproval or ExceptionStatus.PendingManagerApproval or ExceptionStatus.PendingSecurityApproval => "st-pending",
-            ExceptionStatus.ExceptionRequested or ExceptionStatus.UnderReview or ExceptionStatus.Detected => "st-pending",
-            ExceptionStatus.ReviewDue => "st-warn",
-            ExceptionStatus.Expired => "st-expired",
-            ExceptionStatus.Rejected => "st-rejected",
-            ExceptionStatus.Closed => "st-closed",
-            ExceptionStatus.NeedMoreInfo => "st-warn",
-            _ => "st-closed"
-        };
-        return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"status-badge {cls}\">{VRTrackingApp.Data.Models.ExceptionStatusLabels.For(s)}</span>");
-    }
-
-    static Microsoft.AspNetCore.Html.IHtmlContent RiskBadge(RiskLevel? r)
-    {
-        if (r == null) return new Microsoft.AspNetCore.Html.HtmlString("<span class=\"text-muted\">—</span>");
-        var cls = r switch
-        {
-            RiskLevel.Low => "risk-low",
-            RiskLevel.Medium => "risk-medium",
-            RiskLevel.High => "risk-high",
-            _ => "risk-critical"
-        };
-        return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"risk-badge {cls}\">{r}</span>");
-    }
-}

@@ -12,7 +12,7 @@
         <p class="page-sub">@(f?.PluginName ?? "Vulnerability") on @(host?.HostName ?? "—")</p>
     </div>
     <div class="d-flex gap-2 align-items-center">
-        @StatusBadge(Model.Status)
+        @VRTrackingApp.Web.Html.UiHelpers.StatusBadge(Model.Status)
         <a class="btn btn-outline-secondary" asp-action="Index">← Register</a>
     </div>
 </div>
@@ -93,11 +93,11 @@
                     <div class="field"><div class="f-label">Asset</div><div class="f-val">@(host?.HostName ?? "—")</div></div>
                     <div class="field"><div class="f-label">Severity</div><div class="f-val">@Html.Raw(VRTrackingApp.Web.Html.UiHelpers.Sev(f?.Severity))</div></div>
                     <div class="field"><div class="f-label">CVSS</div><div class="f-val">@(f?.CvssV3BaseScore?.ToString("0.0") ?? "—")</div></div>
-                    <div class="field"><div class="f-label">Status</div><div class="f-val">@StatusBadge(Model.Status)</div></div>
+                    <div class="field"><div class="f-label">Status</div><div class="f-val">@VRTrackingApp.Web.Html.UiHelpers.StatusBadge(Model.Status)</div></div>
                     <div class="field"><div class="f-label">Owner</div><div class="f-val">@(Model.Owner?.DisplayName ?? "Unassigned")</div></div>
                     <div class="field"><div class="f-label">Review Date</div><div class="f-val">@(Model.NextReviewDate?.ToString("yyyy-MM-dd") ?? "—")</div></div>
                     <div class="field"><div class="f-label">Expiry</div><div class="f-val">@(Model.ExpiryDate?.ToString("yyyy-MM-dd") ?? "—")</div></div>
-                    <div class="field"><div class="f-label">Risk</div><div class="f-val">@RiskBadge(Model.OverallRisk)</div></div>
+                    <div class="field"><div class="f-label">Risk</div><div class="f-val">@VRTrackingApp.Web.Html.UiHelpers.RiskBadge(Model.OverallRisk)</div></div>
                     <div class="field"><div class="f-label">First Approver</div><div class="f-val">@VRTrackingApp.Web.Services.Exceptions.ExceptionRoutingService.RoleLabel(Model.Stage1Role ?? "—")</div></div>
                 </div>
                 <div class="field mt-2"><div class="f-label">Reason</div><div class="f-val">@Model.Reason</div></div>
@@ -271,17 +271,24 @@
                     { <li><div><b>@(c.AuthorDisplayName ?? c.User?.DisplayName)</b></div><div class="t-when">@c.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div><div class="small">@c.Body</div></li> }
                     @if (Model.Comments.Count == 0) { <li class="text-muted">No comments.</li> }
                 </ul>
+            </div>
                 @if (isOwner || canAct)
                 {
                     <form method="post" asp-action="AddComment" asp-route-id="@Model.Id" class="mt-2">
                         @Html.AntiForgeryToken()
-                        <div class="input-group">
-                            <input type="text" class="form-control" name="body" placeholder="Add a comment…" />
-                            <button class="btn btn-outline-primary">Post</button>
+                        <div class="md-editor" data-md-editor>
+                            <div class="md-toolbar btn-group btn-group-sm" role="toolbar" aria-label="Formatting">
+                                <button type="button" class="btn btn-outline-secondary" data-md="bold" title="Bold"><b>B</b></button>
+                                <button type="button" class="btn btn-outline-secondary" data-md="italic" title="Italic"><i>I</i></button>
+                                <button type="button" class="btn btn-outline-secondary" data-md="code" title="Code">&lt;/&gt;</button>
+                                <button type="button" class="btn btn-outline-secondary" data-md="list" title="List">•</button>
+                                <button type="button" class="btn btn-outline-secondary" data-md="link" title="Link">🔗</button>
+                            </div>
+                            <textarea class="form-control" name="body" rows="2" placeholder="Add a comment… (Markdown supported)"></textarea>
                         </div>
+                        <button class="btn btn-outline-primary mt-2">Post</button>
                     </form>
                 }
-            </div>
         </div>
     </div>
 </div>
@@ -309,32 +316,6 @@
         ApprovalDecision.NeedMoreInfo => "info",
         _ => "pending"
     };
-    static Microsoft.AspNetCore.Html.IHtmlContent StatusBadge(ExceptionStatus s)
-    {
-        var cls = s switch
-        {
-            ExceptionStatus.ActiveException or ExceptionStatus.Renewed => "st-active",
-            ExceptionStatus.PendingTechnicalApproval or ExceptionStatus.PendingManagerApproval or ExceptionStatus.PendingSecurityApproval or ExceptionStatus.ExceptionRequested => "st-pending",
-            ExceptionStatus.ReviewDue or ExceptionStatus.NeedMoreInfo => "st-warn",
-            ExceptionStatus.Expired => "st-expired",
-            ExceptionStatus.Rejected => "st-rejected",
-            ExceptionStatus.Closed => "st-closed",
-            _ => "st-closed"
-        };
-        return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"status-badge {cls}\">{VRTrackingApp.Data.Models.ExceptionStatusLabels.For(s)}</span>");
-    }
-    static Microsoft.AspNetCore.Html.IHtmlContent RiskBadge(RiskLevel? r)
-    {
-        if (r == null) return new Microsoft.AspNetCore.Html.HtmlString("<span class=\"text-muted\">—</span>");
-        var cls = r switch
-        {
-            RiskLevel.Low => "risk-low",
-            RiskLevel.Medium => "risk-medium",
-            RiskLevel.High => "risk-high",
-            _ => "risk-critical"
-        };
-        return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"risk-badge {cls}\">{r}</span>");
-    }
     static Microsoft.AspNetCore.Html.IHtmlContent MitStatus(MitigationStatus s)
     {
         var cls = s switch
@@ -346,4 +327,5 @@
         return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"status-badge {cls}\">{s.Humanize()}</span>");
     }
 }
+
 
