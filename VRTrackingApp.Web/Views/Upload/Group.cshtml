@@ -1,47 +1,103 @@
 @model VRTrackingApp.Data.Models.ScanGroup
 @{
     ViewData["Title"] = $"Scan Group #{Model.Id}";
+    var uploads = Model.Uploads.OrderBy(x => x.UploadedAt).ToList();
 }
 <div class="page-head">
-    <div><h1>Scan Group #@Model.Id</h1>
-    <p class="page-sub">Logical scan identity: <code>@Model.ScanKey</code></p></div>
-    <a class="btn btn-outline-secondary" asp-action="Groups">← All groups</a>
+    <div>
+        <h1>Scan Group #@Model.Id</h1>
+        <p class="page-sub">All uploads that belong to the same logical scan are grouped together so vulnerabilities are never stored twice.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Groups">← All scan groups</a>
 </div>
 
-<div class="grid-2">
-    <div class="card">
-        <div class="card-h">Scan metadata</div>
-        <div class="card-b">
-            <div class="field"><div class="f-label">Source type</div><div class="f-val">@Model.SourceType</div></div>
-            @if (!string.IsNullOrEmpty(Model.ScanCycleLabel)) { <div class="field"><div class="f-label">Cycle</div><div class="f-val">@Model.ScanCycleLabel</div></div> }
-            @if (!string.IsNullOrEmpty(Model.NessusScanUuid)) { <div class="field"><div class="f-label">Nessus UUID</div><div class="f-val" style="font-size:11px">@Model.NessusScanUuid</div></div> }
-            @if (!string.IsNullOrEmpty(Model.ScannerName)) { <div class="field"><div class="f-label">Scanner</div><div class="f-val">@Model.ScannerName</div></div> }
-            @if (!string.IsNullOrEmpty(Model.PolicyName)) { <div class="field"><div class="f-label">Policy</div><div class="f-val">@Model.PolicyName</div></div> }
-            @if (Model.ScanStart != null) { <div class="field"><div class="f-label">Scan start</div><div class="f-val">@Model.ScanStart?.ToUniversalTime():u</div></div> }
-            @if (Model.ScanEnd != null) { <div class="field"><div class="f-label">Scan end</div><div class="f-val">@Model.ScanEnd?.ToUniversalTime():u</div></div> }
-            <div class="field"><div class="f-label">Totals</div><div class="f-val">@Model.TotalHosts hosts · @Model.TotalFindings findings · @Model.TotalInstances instances</div></div>
+@* ---- Scan identity summary ---- *@
+<div class="card mb-3">
+    <div class="card-h">Scan metadata</div>
+    <div class="card-b">
+        <div class="score-grid mb-2">
+            <div class="score-box"><div class="s-val">@Model.TotalHosts</div><div class="s-lbl">Hosts</div></div>
+            <div class="score-box"><div class="s-val">@Model.TotalFindings</div><div class="s-lbl">Findings</div></div>
+            <div class="score-box"><div class="s-val">@Model.TotalInstances</div><div class="s-lbl">Instances</div></div>
+            <div class="score-box"><div class="s-val">@Model.TotalUploads</div><div class="s-lbl">Uploads</div></div>
+        </div>
+        <div class="field-grid">
+            <div class="field"><div class="f-label">Scan source</div><div class="f-val">@Model.SourceType</div></div>
+            @if (!string.IsNullOrEmpty(Model.ScanCycleLabel)) { <div class="field"><div class="f-label">Scan cycle</div><div class="f-val">@Model.ScanCycleLabel</div></div> }
+            @if (!string.IsNullOrEmpty(Model.NessusScanUuid)) { <div class="field"><div class="f-label">Nessus scan UUID</div><div class="f-val" style="font-size:11px;word-break:break-all">@Model.NessusScanUuid</div></div> }
+            @if (!string.IsNullOrEmpty(Model.ScannerName)) { <div class="field"><div class="f-label">Scanner name</div><div class="f-val">@Model.ScannerName</div></div> }
+            @if (!string.IsNullOrEmpty(Model.PolicyName)) { <div class="field"><div class="f-label">Scan policy</div><div class="f-val">@Model.PolicyName</div></div> }
+            @if (Model.ScanStart != null) { <div class="field"><div class="f-label">Scan started (UTC)</div><div class="f-val">@Model.ScanStart?.ToUniversalTime():u</div></div> }
+            @if (Model.ScanEnd != null) { <div class="field"><div class="f-label">Scan finished (UTC)</div><div class="f-val">@Model.ScanEnd?.ToUniversalTime():u</div></div> }
+            <div class="field"><div class="f-label">Group key</div><div class="f-val" style="font-size:11px;word-break:break-all" title="Used to match the same scan across different files and formats">@Model.ScanKey</div></div>
+            <div class="field"><div class="f-label">Last updated</div><div class="f-val">@Model.UpdatedAt.ToUniversalTime():u</div></div>
         </div>
     </div>
-    <div class="card">
-        <div class="card-h">Uploads in this group</div>
-        <div class="card-b p-0">
-            <table class="table table-sm mb-0">
-                <thead><tr><th>Upload</th><th>By</th><th>When</th><th>Outcome</th><th>New / Existing</th><th></th></tr></thead>
-                <tbody>
-                @foreach (var u in Model.Uploads.OrderBy(x => x.UploadedAt))
-                {
-                    var a = u.IngestionAudit;
-                    <tr>
-                        <td>@u.FileName <span class="badge bg-light text-dark">@u.Format</span></td>
-                        <td>@(u.UploadedBy?.DisplayName ?? u.UploadedBy?.UserName ?? "—")</td>
-                        <td>@u.UploadedAt.ToUniversalTime():u</td>
-                        <td>@(a?.Outcome ?? u.Status)</td>
-                        <td>@(a != null ? $"{a.NewFindings} / {a.ExistingFindings}" : "—")</td>
-                        <td><a class="btn btn-sm btn-outline-secondary" asp-action="History" asp-route-id="@u.Id">Audit</a></td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
+</div>
+
+@* ---- Uploads belonging to this group ---- *@
+<div class="card">
+    <div class="card-h">
+        <span>Uploads in this group (@uploads.Count)</span>
+        <span class="card-h-sub">Each file uploaded for this scan, with how many findings it added</span>
+    </div>
+    <div class="card-b p-0">
+        @if (!uploads.Any())
+        {
+            <div class="empty">No uploads are linked to this scan group yet.</div>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Uploaded file</th>
+                            <th>Format</th>
+                            <th>Uploaded by</th>
+                            <th>Uploaded at (UTC)</th>
+                            <th>Outcome</th>
+                            <th class="text-center">New / Existing</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var u in uploads)
+                    {
+                        var a = u.IngestionAudit;
+                        <tr>
+                            <td><span class="fw-600">@u.FileName</span></td>
+                            <td><span class="badge bg-light text-dark">@u.Format</span></td>
+                            <td>@(u.UploadedBy?.DisplayName ?? u.UploadedBy?.UserName ?? "—")</td>
+                            <td>@u.UploadedAt.ToUniversalTime():u</td>
+                            <td>
+                                @if (a != null)
+                                {
+                                    var cls = a.Outcome == "Duplicate" ? "dup" : a.Outcome == "Merged" ? "merge" : "completed";
+                                    <span class="pill @cls">@a.Outcome</span>
+                                    @if (!string.IsNullOrEmpty(a.DuplicateStatus) && a.DuplicateStatus != "Unique")
+                                    { <span class="text-muted small">(@a.DuplicateStatus)</span> }
+                                }
+                                else
+                                {
+                                    <span class="pill pill-processing">@u.Status</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (a != null)
+                                {
+                                    <span title="New findings added by this upload">@a.NewFindings new</span>
+                                    <span class="text-muted"> / @a.ExistingFindings existing</span>
+                                    @if (a.ReopenedFindings > 0) { <div class="small text-danger">@a.ReopenedFindings reopened</div> }
+                                }
+                                else { <span class="text-muted">—</span> }
+                            </td>
+                            <td><a class="btn btn-sm btn-outline-secondary" asp-action="History" asp-route-id="@u.Id">View audit</a></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
     </div>
 </div>
