@@ -1,0 +1,47 @@
+@model VRTrackingApp.Data.Models.ScanGroup
+@{
+    ViewData["Title"] = $"Scan Group #{Model.Id}";
+}
+<div class="page-head">
+    <div><h1>Scan Group #@Model.Id</h1>
+    <p class="page-sub">Logical scan identity: <code>@Model.ScanKey</code></p></div>
+    <a class="btn btn-outline-secondary" asp-action="Groups">← All groups</a>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-h">Scan metadata</div>
+        <div class="card-b">
+            <div class="field"><div class="f-label">Source type</div><div class="f-val">@Model.SourceType</div></div>
+            @if (!string.IsNullOrEmpty(Model.ScanCycleLabel)) { <div class="field"><div class="f-label">Cycle</div><div class="f-val">@Model.ScanCycleLabel</div></div> }
+            @if (!string.IsNullOrEmpty(Model.NessusScanUuid)) { <div class="field"><div class="f-label">Nessus UUID</div><div class="f-val" style="font-size:11px">@Model.NessusScanUuid</div></div> }
+            @if (!string.IsNullOrEmpty(Model.ScannerName)) { <div class="field"><div class="f-label">Scanner</div><div class="f-val">@Model.ScannerName</div></div> }
+            @if (!string.IsNullOrEmpty(Model.PolicyName)) { <div class="field"><div class="f-label">Policy</div><div class="f-val">@Model.PolicyName</div></div> }
+            @if (Model.ScanStart != null) { <div class="field"><div class="f-label">Scan start</div><div class="f-val">@Model.ScanStart?.ToUniversalTime():u</div></div> }
+            @if (Model.ScanEnd != null) { <div class="field"><div class="f-label">Scan end</div><div class="f-val">@Model.ScanEnd?.ToUniversalTime():u</div></div> }
+            <div class="field"><div class="f-label">Totals</div><div class="f-val">@Model.TotalHosts hosts · @Model.TotalFindings findings · @Model.TotalInstances instances</div></div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-h">Uploads in this group</div>
+        <div class="card-b p-0">
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Upload</th><th>By</th><th>When</th><th>Outcome</th><th>New / Existing</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var u in Model.Uploads.OrderBy(x => x.UploadedAt))
+                {
+                    var a = u.IngestionAudit;
+                    <tr>
+                        <td>@u.FileName <span class="badge bg-light text-dark">@u.Format</span></td>
+                        <td>@(u.UploadedBy?.DisplayName ?? u.UploadedBy?.UserName ?? "—")</td>
+                        <td>@u.UploadedAt.ToUniversalTime():u</td>
+                        <td>@(a?.Outcome ?? u.Status)</td>
+                        <td>@(a != null ? $"{a.NewFindings} / {a.ExistingFindings}" : "—")</td>
+                        <td><a class="btn btn-sm btn-outline-secondary" asp-action="History" asp-route-id="@u.Id">Audit</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

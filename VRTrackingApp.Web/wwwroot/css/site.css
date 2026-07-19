@@ -562,3 +562,15 @@ th[data-sort]:hover { color: var(--text); }
 .md-editor .md-toolbar { margin-bottom: 6px; }
 .md-editor .md-toolbar .btn { font-size: 12px; line-height: 1; padding: 4px 8px; }
 .md-editor textarea { resize: vertical; }
+
+/* ---- Scan de-duplication banners (Scenario 12) ---- */
+.dedup-banner { display:flex; gap:12px; align-items:flex-start; padding:14px 16px; border-radius:12px; margin-bottom:18px; border:1px solid; font-size:14px; }
+.dedup-ico { font-size:22px; line-height:1; }
+.dedup-link { display:inline-block; margin-left:10px; font-weight:600; }
+.dedup-dup { background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+.dedup-warn { background:#fffbeb; border-color:#fde68a; color:#92400e; }
+.dedup-merge { background:#eff6ff; border-color:#bfdbfe; color:#1e40af; }
+
+/* pill variants used by scan group / ingestion audit */
+.pill.merge { background:#dbeafe; color:#1e40af; }
+.pill.dup { background:#fee2e2; color:#991b1b; }

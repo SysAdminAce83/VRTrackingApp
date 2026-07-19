@@ -1,0 +1,38 @@
+@model System.Collections.Generic.List<VRTrackingApp.Data.Models.ScanGroup>
+@{
+    ViewData["Title"] = "Scan Groups";
+}
+
+<div class="page-head">
+    <div><h1>Scan Groups</h1>
+    <p class="page-sub">Every upload is grouped by its logical scan. Duplicate and merged uploads attach to the same group so no vulnerability is stored twice.</p></div>
+    <a class="btn btn-primary" asp-action="Index">+ Upload Scan</a>
+</div>
+
+<table class="table card">
+    <thead><tr><th>#</th><th>Source</th><th>Uploads</th><th>Scanner / Policy</th><th>Scan window</th><th>Hosts</th><th>Findings</th><th>State</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var g in Model)
+    {
+        <tr>
+            <td>@g.Id</td>
+            <td>@g.SourceType @(g.ScanCycleLabel != null ? $"· {g.ScanCycleLabel}" : "")</td>
+            <td>@g.TotalUploads</td>
+            <td>
+                @if (!string.IsNullOrEmpty(g.ScannerName)) { <div>@g.ScannerName</div> }
+                @if (!string.IsNullOrEmpty(g.PolicyName)) { <div class="small text-muted">@g.PolicyName</div> }
+                @if (string.IsNullOrEmpty(g.ScannerName) && string.IsNullOrEmpty(g.PolicyName)) { <span class="text-muted">—</span> }
+            </td>
+            <td>
+                @if (g.ScanStart != null) { <div>@g.ScanStart?.ToUniversalTime():u</div> }
+                @if (g.ScanEnd != null) { <div class="small text-muted">to @g.ScanEnd?.ToUniversalTime():u</div> }
+            </td>
+            <td>@g.TotalHosts</td>
+            <td>@g.TotalFindings</td>
+            <td><span class="pill @(g.IngestState == "Processing" ? "Exception" : "Completed")">@g.IngestState</span></td>
+            <td><a class="btn btn-sm btn-outline-secondary" asp-action="Group" asp-route-id="@g.Id">View</a></td>
+        </tr>
+    }
+    @if (!Model.Any()) { <tr><td colspan="9" class="text-muted">No scans uploaded yet.</td></tr> }
+    </tbody>
+</table>

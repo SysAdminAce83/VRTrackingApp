@@ -2,24 +2,54 @@
 @{
     ViewData["Title"] = "Validate & Preview";
     var p = Model.Preview;
+    var d = Model.Decision;
+}
+@functions {
+    string Sev(string s) => VRTrackingApp.Web.Html.UiHelpers.Sev(s ?? "");
 }
 
 <div class="page-head">
     <div>
         <h1>Validation &amp; Parse Preview</h1>
-        <p class="page-sub">Review the parsed result before committing. Nothing is saved until you confirm.</p>
+        <p class="page-sub">Review the parsed result and de-duplication decision before committing. Nothing is saved until you confirm.</p>
     </div>
     <a class="btn btn-outline-secondary" asp-action="Index">← Back</a>
 </div>
+
+@* ---- De-duplication decision banner (Scenario 3,4,12) ---- *@
+@if (d != null && d.Outcome != "Ingested")
+{
+    var cls = d.Outcome switch { "Duplicate" => "dup", "Queued" => "warn", "Merged" => "merge", _ => "warn" };
+    var icon = d.Outcome switch { "Duplicate" => "⛔", "Queued" => "⏳", "Merged" => "🔀", _ => "⚠️" };
+    <div class="dedup-banner dedup-@cls">
+        <div class="dedup-ico">@icon</div>
+        <div>
+            <strong>@d.Outcome</strong> — @d.Message
+            @if (d.Outcome == "Queued" && d.ProcessingUserName != null)
+            {
+                <span>This scan is currently being processed by <b>@d.ProcessingUserName</b>.</span>
+            }
+            @if (d.ExistingScanGroupId != null)
+            {
+                <a class="dedup-link" asp-action="Group" asp-controller="Upload" asp-route-id="@d.ExistingScanGroupId">View existing scan group #@d.ExistingScanGroupId</a>
+            }
+        </div>
+    </div>
+}
 
 <div class="grid-2">
     <div class="card">
         <div class="card-h">Validation status @(p.Valid ? Html.Raw("<span class=\"pill Completed\">Valid</span>") : Html.Raw("<span class=\"pill Exception\">Invalid</span>"))</div>
         <div class="card-b">
             <div class="field"><div class="f-label">Original file</div><div class="f-val">@Model.OriginalFileName</div></div>
-            <div class="field"><div class="f-label">Stored as</div><div class="f-val"><code>@Model.Token</code></div></div>
+            <div class="field"><div class="f-label">Format</div><div class="f-val"><code>@Model.Format</code></div></div>
             <div class="field"><div class="f-label">Size</div><div class="f-val">@(Model.FileSize / 1024) KB</div></div>
             <div class="field"><div class="f-label">SHA-256</div><div class="f-val" style="font-size:11px;word-break:break-all">@Model.FileHash</div></div>
+            @if (!string.IsNullOrEmpty(Model.Md5Hash))
+            {
+                <div class="field"><div class="f-label">MD5</div><div class="f-val" style="font-size:11px;word-break:break-all">@Model.Md5Hash</div></div>
+            }
+            <div class="field"><div class="f-label">Scan key</div><div class="f-val" style="font-size:11px;word-break:break-all">@Model.ScanKey</div></div>
             <ul class="mt-2 small">
                 @foreach (var c in p.ValidationChecks) { <li>@c</li> }
             </ul>
@@ -40,21 +70,21 @@
     </div>
 </div>
 
-@if (p.Sample.Any())
+@if (p.Rows.Any())
 {
     <div class="card mb-3">
-        <div class="card-h">Parse result preview (first @p.Sample.Count rows)</div>
+        <div class="card-h">Parse result preview (first @Math.Min(p.Rows.Count, 15) of @p.Rows.Count rows)</div>
         <div class="card-b p-0">
             <table class="table table-sm mb-0">
                 <thead><tr><th>Sev</th><th>Plugin</th><th>Name</th><th>Host</th><th>CVE</th></tr></thead>
                 <tbody>
-                    @foreach (var r in p.Sample)
+                    @foreach (var r in p.Rows.Take(15))
                     {
                         <tr>
-                            <td>@Html.Raw(VRTrackingApp.Web.Html.UiHelpers.Sev(r.Severity))</td>
+                            <td>@Html.Raw(Sev(r.Severity))</td>
                             <td>@r.PluginId</td>
                             <td>@r.Name</td>
-                            <td>@r.Host</td>
+                            <td>@r.HostKey</td>
                             <td>@(r.Cve ?? "—")</td>
                         </tr>
                     }
@@ -71,13 +101,23 @@
             <input type="hidden" name="Token" value="@Model.Token" />
             <input type="hidden" name="OriginalFileName" value="@Model.OriginalFileName" />
             <input type="hidden" name="FileHash" value="@Model.FileHash" />
+            <input type="hidden" name="Md5Hash" value="@Model.Md5Hash" />
             <input type="hidden" name="FileSize" value="@Model.FileSize" />
+            <input type="hidden" name="Format" value="@Model.Format" />
+            <input type="hidden" name="ScanKey" value="@Model.ScanKey" />
             <input type="hidden" name="ScanName" value="@Model.ScanName" />
             <input type="hidden" name="CycleLabel" value="@Model.CycleLabel" />
             <input type="hidden" name="ScanDate" value="@(Model.ScanDate?.ToString("yyyy-MM-dd"))" />
             <input type="hidden" name="SourceType" value="@Model.SourceType" />
             <input type="hidden" name="Notes" value="@Model.Notes" />
-            <button class="btn btn-primary" @(p.Valid ? "" : "disabled")>Upload and Process</button>
+            @if (d != null && d.Outcome == "Duplicate")
+            {
+                <button class="btn btn-outline-secondary" type="submit">Add anyway (as duplicate record)</button>
+            }
+            else
+            {
+                <button class="btn btn-primary" @(p.Valid ? "" : "disabled")>Upload and Process</button>
+            }
         </form>
         <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
     </div>

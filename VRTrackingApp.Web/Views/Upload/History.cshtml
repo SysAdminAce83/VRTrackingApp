@@ -1,0 +1,55 @@
+@model VRTrackingApp.Data.Models.ScanUpload
+@{
+    ViewData["Title"] = "Ingestion Audit";
+    var a = Model.IngestionAudit;
+}
+<div class="page-head">
+    <div><h1>Ingestion Audit</h1><p class="page-sub">@Model.FileName</p></div>
+    <a class="btn btn-outline-secondary" asp-action="Groups">← Scan Groups</a>
+</div>
+
+@if (Model.ScanGroup != null)
+{
+    <div class="card mb-3"><div class="card-b">
+        Part of <a asp-action="Group" asp-route-id="@Model.ScanGroup.Id">scan group #@Model.ScanGroup.Id</a>
+        · <code>@Model.ScanGroup.ScanKey</code>
+    </div></div>
+}
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-h">Outcome</div>
+        <div class="card-b">
+            <div class="field"><div class="f-label">Uploaded by</div><div class="f-val">@(Model.UploadedBy?.DisplayName ?? Model.UploadedBy?.UserName ?? "—")</div></div>
+            <div class="field"><div class="f-label">Uploaded at</div><div class="f-val">@Model.UploadedAt.ToUniversalTime():u</div></div>
+            <div class="field"><div class="f-label">SHA-256</div><div class="f-val" style="font-size:11px;word-break:break-all">@Model.FileHash</div></div>
+            @if (a != null)
+            {
+                <div class="field"><div class="f-label">Outcome</div><div class="f-val"><span class="pill @(a.Outcome == "Duplicate" ? "Exception" : a.Outcome == "Merged" ? "merge" : "Completed")">@a.Outcome</span> (@a.DuplicateStatus)</div></div>
+                <div class="field"><div class="f-label">New / Existing / Reopened</div><div class="f-val">@a.NewFindings / @a.ExistingFindings / @a.ReopenedFindings</div></div>
+                <div class="field"><div class="f-label">Processing time</div><div class="f-val">@a.ProcessingMs ms</div></div>
+                @if (!string.IsNullOrEmpty(a.Reason)) { <div class="field"><div class="f-label">Reason</div><div class="f-val text-danger">@a.Reason</div></div> }
+            }
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-h">Record-level decisions (@Model.DeduplicationLogs.Count)</div>
+        <div class="card-b p-0">
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Decision</th><th>Plugin</th><th>Host</th><th>Port/Proto</th></tr></thead>
+                <tbody>
+                @foreach (var d in Model.DeduplicationLogs.OrderBy(x => x.Decision).ThenBy(x => x.HostName))
+                {
+                    <tr>
+                        <td><span class="pill @(d.Decision == "New" ? "Completed" : d.Decision == "Reopened" ? "Exception" : "merge")">@d.Decision</span></td>
+                        <td>@d.PluginId</td>
+                        <td>@(d.HostName ?? "—")</td>
+                        <td>@(d.Port?.ToString() ?? "—")/@(d.Protocol ?? "—")</td>
+                    </tr>
+                }
+                @if (!Model.DeduplicationLogs.Any()) { <tr><td colspan="4" class="text-muted">No record-level decisions recorded.</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

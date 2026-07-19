@@ -56,7 +56,7 @@ public class ScanImportService
     {
         if (size <= 0 || size > MaxFileSize) return false;
         var ext = Path.GetExtension(fileName).ToLowerInvariant();
-        if (ext is not (".csv" or ".pdf" or ".txt")) return false;
+        if (ext is not (".csv" or ".pdf" or ".txt" or ".nessus" or ".xml")) return false;
         // Do not trust client-supplied type blindly; we re-check by extension + magic bytes later.
         return true;
     }
@@ -322,6 +322,122 @@ public class ScanImportService
             ? $"Ready to import: {preview.Hosts} host(s), {preview.Findings} finding(s), {preview.Instances} instance(s)."
             : "No valid finding rows were detected.";
         return preview;
+    }
+
+
+
+    /// <summary>
+    /// Normalizes a CSV report into the common ParsedScan model used by the
+    /// ingestion/deduplication engine. Keeps CSV/PDF/.nessus on one comparable shape (Scenario 8).
+    /// Does not persist anything.
+    /// </summary>
+    public async Task<ParsedScan> ParseCsvToModelAsync(Stream stream)
+    {
+        var scan = new ParsedScan();
+        try
+        {
+            string text;
+            using (var sr = new StreamReader(stream, leaveOpen: true))
+                text = await sr.ReadToEndAsync();
+            var lines = text.Split('\n');
+            if (lines.Length == 0) { scan.Message = "Empty file."; return scan; }
+
+            var col = MapColumns(ParseCsvLine(lines[0]));
+            if (col.Host < 0 || col.PluginId < 0)
+            {
+                scan.Message = "CSV missing required columns 'Host' and/or 'Plugin ID'.";
+                return scan;
+            }
+            var location = DetectLocation(text);
+            for (var i = 1; i < lines.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(lines[i])) continue;
+                var f = ParseCsvLine(lines[i]);
+                if (f.Count <= col.PluginId) continue;
+                var hostKey = Safe(f, col.Host);
+                if (string.IsNullOrWhiteSpace(hostKey)) continue;
+                int.TryParse(Safe(f, col.PluginId), out var pid);
+                scan.Rows.Add(new ParsedHostFinding
+                {
+                    HostKey = hostKey,
+                    Ip = hostKey,
+                    Os = col.OS >= 0 ? Safe(f, col.OS) : null,
+                    PluginId = pid,
+                    Name = Safe(f, col.Name),
+                    Severity = NormalizeSeverity(Safe(f, col.Risk)),
+                    Cve = col.Cve >= 0 ? CleanCve(Safe(f, col.Cve)) : null,
+                    Synopsis = col.Synopsis >= 0 ? Safe(f, col.Synopsis) : null,
+                    Description = col.Description >= 0 ? Safe(f, col.Description) : null,
+                    Solution = col.Solution >= 0 ? Safe(f, col.Solution) : null,
+                    RiskFactor = col.RiskFactor >= 0 ? Safe(f, col.RiskFactor) : null,
+                    Stig = col.Stig >= 0 ? Safe(f, col.Stig) : null,
+                    Port = ToInt(Safe(f, col.Port)),
+                    Protocol = col.Protocol >= 0 ? Safe(f, col.Protocol) : null,
+                    Service = col.Name >= 0 ? Safe(f, col.Name) : null,
+                    PluginOutput = col.PluginOutput >= 0 ? Safe(f, col.PluginOutput) : null,
+                    CvssV3Base = ToDouble(Safe(f, col.CvssV3Base)),
+                    CvssV3Temp = ToDouble(Safe(f, col.CvssV3Temp)),
+                    CvssV2Base = ToDouble(Safe(f, col.CvssV2Base)),
+                    Vpr = ToDouble(Safe(f, col.Vpr)),
+                    Epss = ToDouble(Safe(f, col.Epss)),
+                    References = col.SeeAlso >= 0 ? Safe(f, col.SeeAlso) : null,
+                });
+            }
+            scan.Metadata = new ScanMetadata { ScanTarget = location };
+            scan.Valid = scan.Rows.Count > 0;
+            scan.Message = scan.Valid
+                ? $"Ready to ingest: {scan.Hosts} host(s), {scan.Findings} finding(s), {scan.Instances} instance(s)."
+                : "No valid finding rows detected.";
+        }
+        catch (Exception ex) { scan.Message = $"CSV parse failed: {ex.Message}"; }
+        return scan;
+    }
+
+    /// <summary>Normalizes a parsed PDF report into the common ParsedScan model.</summary>
+    public async Task<ParsedScan> ParsePdfToModelAsync(Stream stream)
+    {
+        var scan = new ParsedScan();
+        var data = await ParsePdfAsync(stream);
+        if (data == null || data.Rows.Count == 0)
+        {
+            scan.Message = data?.Errors.Count > 0 ? string.Join("; ", data.Errors) : "No scannable findings found in the PDF.";
+            return scan;
+        }
+        foreach (var r in data.Rows)
+        {
+            data.Meta.TryGetValue(r.PluginId, out var pm);
+            scan.Rows.Add(new ParsedHostFinding
+            {
+                HostKey = r.Host,
+                Ip = r.Ip,
+                Os = r.Os,
+                PluginId = r.PluginId,
+                Name = r.Name,
+                Severity = NormalizeSeverity(pm?.Severity ?? r.Severity),
+                Cve = pm?.Cve,
+                Synopsis = pm?.Synopsis,
+                Description = pm?.Description,
+                Solution = pm?.Solution,
+                RiskFactor = pm?.RiskFactor,
+                Stig = pm?.Stig,
+                Port = ParsePort(pm?.Port),
+                Protocol = ParseProtocol(pm?.Port),
+                Service = r.Name,
+            });
+        }
+        scan.Metadata = new ScanMetadata { ScanTarget = DetectLocation(data.RawText ?? "") };
+        scan.Valid = scan.Rows.Count > 0;
+        scan.Message = scan.Valid
+            ? $"Ready to ingest: {scan.Hosts} host(s), {scan.Findings} finding(s), {scan.Instances} instance(s) from PDF."
+            : "No valid finding rows detected.";
+        return scan;
+    }
+
+    /// <summary>Text reports carry no structured findings; returns an empty (invalid) ParsedScan.</summary>
+    public Task<ParsedScan> ParseTxtToModelAsync(Stream stream)
+    {
+        var scan = new ParsedScan { Message = "Text reports contain host inventory only and no structured findings." };
+        return Task.FromResult(scan);
     }
 
     public async Task<ScanParseResult> ImportPdfAsync(Stream stream, ScanUpload scan)
@@ -903,3 +1019,5 @@ public class ScanImportService
         public int OS = -1;
     }
 }
+
+

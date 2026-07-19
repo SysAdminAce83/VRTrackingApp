@@ -54,7 +54,15 @@ public enum ApprovalDecision
     Pending,
     Approved,
     Rejected,
-    NeedMoreInfo
+    NeedMoreInfo,
+
+    // ---- Scan ingestion / deduplication (Scenario 12) ----
+    ScanIngested,
+    ScanDuplicateDetected,
+    ScanAlreadyProcessing,
+    ScanAdditionalFindings,
+    ScanRejected,
+    ScanMerged
 }
 
 /// <summary>Section 2 — why the vulnerability is not fixable.</summary>
@@ -128,7 +136,15 @@ public enum NotificationType
     ReviewDue,
     EvidenceMissing,
     MitigationOverdue,
-    NeedMoreInfo
+    NeedMoreInfo,
+
+    // ---- Scan ingestion / deduplication (Scenario 12) ----
+    ScanIngested,
+    ScanDuplicateDetected,
+    ScanAlreadyProcessing,
+    ScanAdditionalFindings,
+    ScanRejected,
+    ScanMerged
 }
 
 /// <summary>Reason an exception was closed.</summary>
@@ -147,3 +163,4 @@ public static class ExceptionCatalogs
         "Disk Encryption", "Least Privilege", "Jump Server", "Conditional Access"
     };
 }
+

@@ -20,9 +20,9 @@
             @Html.AntiForgeryToken()
             <div class="dropzone mb-3" id="dz">
                 <div class="dz-ico">⤓</div>
-                <div><b>Drag &amp; drop</b> a Nessus <code>.csv</code> or <code>.pdf</code> here</div>
+                <div><b>Drag &amp; drop</b> a Nessus <code>.csv</code>, <code>.pdf</code> or <code>.nessus</code> here</div>
                 <div class="text-muted small">or click to browse · max 100 MB</div>
-                <input type="file" name="file" id="fileInput" accept=".csv,.pdf" hidden />
+                <input type="file" name="file" id="fileInput" accept=".csv,.pdf,.nessus,.xml" hidden />
                 <div id="fileName" class="mt-2 fw-bold"></div>
             </div>
 
@@ -68,3 +68,4 @@
         dz.addEventListener('drop', ev => { if (ev.dataTransfer.files.length) { input.files = ev.dataTransfer.files; fn.textContent = input.files[0].name; } });
     </script>
 }
+

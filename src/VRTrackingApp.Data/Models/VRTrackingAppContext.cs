@@ -16,6 +16,11 @@ public class VRTrackingAppContext : DbContext
     public DbSet<RemediationJob> RemediationJobs { get; set; }
     public DbSet<ExceptionRecord> ExceptionRecords { get; set; }
     public DbSet<UploadAuditTrail> UploadAuditTrails { get; set; }
+    public DbSet<ScanGroup> ScanGroups { get; set; }
+    public DbSet<ScanMetadata> ScanMetadatas { get; set; }
+    public DbSet<IngestionAudit> IngestionAudits { get; set; }
+    public DbSet<DeduplicationLog> DeduplicationLogs { get; set; }
+    public DbSet<ScanIngestionLock> ScanIngestionLocks { get; set; }
     public DbSet<UserAccount> UserAccounts { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<Role> Roles { get; set; }
@@ -41,7 +46,81 @@ public class VRTrackingAppContext : DbContext
         {
             e.HasIndex(s => s.ScanDate);
             e.HasIndex(s => s.SourceType);
+            e.HasIndex(s => s.FileHash);
+            e.HasIndex(s => s.ScanGroupId);
+            e.HasIndex(s => s.Format);
             e.Property(s => s.FileName).HasMaxLength(255).IsRequired();
+            e.Property(s => s.FileHash).HasMaxLength(64);
+            e.Property(s => s.Md5Hash).HasMaxLength(32);
+            e.Property(s => s.Format).HasMaxLength(20);
+
+            e.HasOne(s => s.ScanGroup)
+                .WithMany(g => g.Uploads)
+                .HasForeignKey(s => s.ScanGroupId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(s => s.Metadata)
+                .WithOne(m => m.ScanUpload)
+                .HasForeignKey<ScanMetadata>(m => m.ScanUploadId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(s => s.IngestionAudit)
+                .WithOne(a => a.ScanUpload)
+                .HasForeignKey<IngestionAudit>(a => a.ScanUploadId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ScanGroup>(e =>
+        {
+            e.HasIndex(g => g.ScanKey).IsUnique();
+            e.HasIndex(g => g.NessusScanUuid);
+            e.HasIndex(g => g.IngestState);
+            e.Property(g => g.ScanKey).HasMaxLength(64).IsRequired();
+            e.Property(g => g.NessusScanUuid).HasMaxLength(64);
+            e.Property(g => g.ScannerName).HasMaxLength(255);
+            e.Property(g => g.PolicyName).HasMaxLength(255);
+            e.Property(g => g.PolicyId).HasMaxLength(64);
+            e.Property(g => g.SourceType).HasMaxLength(50);
+            e.Property(g => g.ScanCycleLabel).HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<ScanMetadata>(e =>
+        {
+            e.HasIndex(m => m.ScanUploadId).IsUnique();
+            e.Property(m => m.NessusScanUuid).HasMaxLength(64);
+            e.Property(m => m.ScannerName).HasMaxLength(255);
+            e.Property(m => m.PolicyName).HasMaxLength(255);
+            e.Property(m => m.PolicyId).HasMaxLength(64);
+            e.Property(m => m.ScanTarget).HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<IngestionAudit>(e =>
+        {
+            e.HasIndex(a => a.ScanUploadId).IsUnique();
+            e.HasIndex(a => a.ScanGroupId);
+            e.HasIndex(a => a.PerformedAt);
+            e.Property(a => a.Outcome).HasMaxLength(20).IsRequired();
+            e.Property(a => a.DuplicateStatus).HasMaxLength(20);
+            e.Property(a => a.Reason).HasMaxLength(2000);
+            e.Property(a => a.ProcessingLog).HasMaxLength(8000);
+        });
+
+        modelBuilder.Entity<DeduplicationLog>(e =>
+        {
+            e.HasIndex(d => d.ScanUploadId);
+            e.HasIndex(d => d.VulnerabilityKey);
+            e.HasIndex(d => new { d.PluginId, d.HostName, d.Port, d.Protocol });
+            e.Property(d => d.VulnerabilityKey).HasMaxLength(128).IsRequired();
+            e.Property(d => d.HostName).HasMaxLength(255);
+            e.Property(d => d.IpAddress).HasMaxLength(45);
+            e.Property(d => d.Cve).HasMaxLength(40);
+            e.Property(d => d.Protocol).HasMaxLength(10);
+            e.Property(d => d.Decision).HasMaxLength(20).IsRequired();
+        });
+
+        modelBuilder.Entity<ScanIngestionLock>(e =>
+        {
+            e.HasIndex(l => l.ScanGroupId).IsUnique();
+            e.HasIndex(l => l.State);
+            e.Property(l => l.State).HasMaxLength(20).IsRequired();
         });
 
         modelBuilder.Entity<AssetHost>(e =>
@@ -319,3 +398,5 @@ public class VRTrackingAppContext : DbContext
         });
     }
 }
+
+

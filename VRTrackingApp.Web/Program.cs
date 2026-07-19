@@ -54,6 +54,7 @@ else
 }
 
 builder.Services.AddScoped<ScanImportService>();
+builder.Services.AddScoped<ScanIngestionService>();
 
 // Exception module V2 services
 builder.Services.AddScoped<VRTrackingApp.Web.Services.Exceptions.ExceptionRoutingService>();
@@ -156,3 +157,4 @@ app.MapControllerRoute(
     pattern: "{controller=Dashboard}/{action=Index}/{id?}");
 
 app.Run();
+
