@@ -13,3 +13,4 @@ D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\V
 D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\refint\VRTrackingApp.Infrastructure.dll
 D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\VRTrackingApp.Infrastructure.pdb
 D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\ref\VRTrackingApp.Infrastructure.dll
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Infrastructure\obj\Debug\net10.0\VRTrackingApp.Infrastructure.sourcelink.json

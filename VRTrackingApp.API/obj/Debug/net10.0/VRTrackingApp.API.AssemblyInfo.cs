@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VRTrackingApp.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c6f865d23fb1c0f0680309279cafd4dd8a9e9a96")]
 [assembly: System.Reflection.AssemblyProductAttribute("VRTrackingApp.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VRTrackingApp.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

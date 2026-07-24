@@ -10,3 +10,4 @@ D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\obj\Debug\net10.0\VRTrackin
 D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\obj\Debug\net10.0\refint\VRTrackingApp.Domain.dll
 D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\obj\Debug\net10.0\VRTrackingApp.Domain.pdb
 D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\obj\Debug\net10.0\ref\VRTrackingApp.Domain.dll
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Domain\obj\Debug\net10.0\VRTrackingApp.Domain.sourcelink.json

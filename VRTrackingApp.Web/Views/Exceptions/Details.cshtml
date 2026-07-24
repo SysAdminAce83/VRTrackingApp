@@ -263,6 +263,59 @@
             </div>
         </div>
 
+        <div class="card mb-3">
+            <div class="card-h">Ticketing Links <span class="card-h-sub">ServiceNow / Jira / …</span></div>
+            <div class="card-b">
+                @if (Model.TicketingLinks.Count == 0)
+                {
+                    <span class="text-muted">No ticketing links attached yet.</span>
+                }
+                else
+                {
+                    <ul class="ev-grid">
+                        @foreach (var l in Model.TicketingLinks)
+                        {
+                            <li class="ev-item">
+                                <div class="ev-ico">🎫</div>
+                                <div class="ev-meta">
+                                    <div class="ev-name">
+                                        @if (!string.IsNullOrWhiteSpace(l.TicketUrl))
+                                        {
+                                            <a href="@l.TicketUrl" target="_blank" rel="noopener">@l.System: @l.TicketId</a>
+                                        }
+                                        else
+                                        {
+                                            <span>@l.System: @l.TicketId</span>
+                                        }
+                                    </div>
+                                    <div class="ev-sub">@(l.Title ?? "") · by @(l.LinkedBy?.DisplayName ?? "unknown") on @l.LinkedAt.ToString("yyyy-MM-dd")</div>
+                                </div>
+                                <form method="post" asp-action="DeleteTicketingLink" asp-route-id="@Model.Id" asp-route-ticketingLinkId="@l.Id" onsubmit="return confirm('Remove this ticketing link?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="ev-del" title="Remove">✕</button>
+                                </form>
+                            </li>
+                        }
+                    </ul>
+                }
+
+                <form method="post" asp-action="AddTicketingLink" asp-route-id="@Model.Id" style="display:grid;grid-template-columns:120px 160px 1fr 200px auto;gap:10px;align-items:end;" class="mt-2">
+                    @Html.AntiForgeryToken()
+                    <select class="form-select form-select-sm" name="system" required>
+                        <option value="ServiceNow">ServiceNow</option>
+                        <option value="Jira">Jira</option>
+                        <option value="AzureDevOps">AzureDevOps</option>
+                        <option value="GitHub">GitHub</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <input type="text" class="form-control form-control-sm" name="ticketId" placeholder="Ticket ID (e.g. INC12345)" required />
+                    <input type="text" class="form-control form-control-sm" name="title" placeholder="Short title" />
+                    <input type="url" class="form-control form-control-sm" name="ticketUrl" placeholder="https://…" />
+                    <button class="btn btn-outline-primary btn-sm" style="white-space:nowrap;">Link</button>
+                </form>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-h">Comments</div>
             <div class="card-b">

@@ -1,0 +1,6 @@
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Web\obj2\Debug\net10.0\VRTrackingApp.Data.csproj.AssemblyReference.cache
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Web\obj2\Debug\net10.0\VRTrackingApp.Data.GeneratedMSBuildEditorConfig.editorconfig
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Web\obj2\Debug\net10.0\VRTrackingApp.Data.AssemblyInfoInputs.cache
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Web\obj2\Debug\net10.0\VRTrackingApp.Data.AssemblyInfo.cs
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Web\obj2\Debug\net10.0\VRTrackingApp.Data.csproj.CoreCompileInputs.cache
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.Web\obj2\Debug\net10.0\VRTrackingApp.Data.sourcelink.json

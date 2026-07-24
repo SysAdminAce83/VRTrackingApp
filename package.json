@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@qdrant/js-client-rest": "^1.18.0",
+    "undici": "^8.7.0"
+  }
+}

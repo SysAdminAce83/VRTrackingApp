@@ -37,6 +37,7 @@ public class VRTrackingAppContext : DbContext
     public DbSet<ExceptionComment> ExceptionComments { get; set; }
     public DbSet<VendorResponse> VendorResponses { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<TicketingLink> TicketingLinks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -332,6 +333,21 @@ public class VRTrackingAppContext : DbContext
                 .WithMany().HasForeignKey(n => n.UserId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(n => n.ExceptionRecord)
                 .WithMany().HasForeignKey(n => n.ExceptionRecordId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<TicketingLink>(e =>
+        {
+            e.HasIndex(t => t.ExceptionRecordId);
+            e.Property(t => t.System).HasMaxLength(40).IsRequired();
+            e.Property(t => t.TicketId).HasMaxLength(80).IsRequired();
+            e.Property(t => t.TicketUrl).HasMaxLength(500);
+            e.Property(t => t.Title).HasMaxLength(255);
+            e.HasOne(t => t.ExceptionRecord)
+                .WithMany(x => x.TicketingLinks)
+                .HasForeignKey(t => t.ExceptionRecordId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(t => t.LinkedBy)
+                .WithMany().HasForeignKey(t => t.LinkedByUserId).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<UploadAuditTrail>(e =>

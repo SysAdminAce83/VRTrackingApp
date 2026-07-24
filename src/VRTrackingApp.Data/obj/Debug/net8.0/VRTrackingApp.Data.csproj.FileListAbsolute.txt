@@ -1,4 +1,0 @@
-D:\Project_WebApp\VRTrackingApp\src\VRTrackingApp.Data\obj\Debug\net8.0\VRTrackingApp.Data.GeneratedMSBuildEditorConfig.editorconfig
-D:\Project_WebApp\VRTrackingApp\src\VRTrackingApp.Data\obj\Debug\net8.0\VRTrackingApp.Data.AssemblyInfoInputs.cache
-D:\Project_WebApp\VRTrackingApp\src\VRTrackingApp.Data\obj\Debug\net8.0\VRTrackingApp.Data.AssemblyInfo.cs
-D:\Project_WebApp\VRTrackingApp\src\VRTrackingApp.Data\obj\Debug\net8.0\VRTrackingApp.Data.csproj.CoreCompileInputs.cache

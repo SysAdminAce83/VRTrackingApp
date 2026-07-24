@@ -155,6 +155,89 @@ public class ReportsController : Controller
         return File(bytes, "application/pdf", $"vr_report_{type}_{DateTime.UtcNow:yyyyMMdd}.pdf");
     }
 
+    public async Task<IActionResult> ExceptionAuditPdf()
+    {
+        var exs = await _db.ExceptionRecords
+            .Include(e => e.VulnerabilityInstance).ThenInclude(i => i.VulnerabilityFinding)
+            .Include(e => e.VulnerabilityInstance).ThenInclude(i => i.AssetHost)
+            .Include(e => e.Owner)
+            .Include(e => e.ApprovalSteps).ThenInclude(s => s.DecisionBy)
+            .Include(e => e.Reviews)
+            .ToListAsync();
+
+        var lines = new List<string>
+        {
+            "RemediateVR Exception Auditor Report",
+            $"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC",
+            $"Total exceptions: {exs.Count}",
+            ""
+        };
+
+        var statusCounts = exs.GroupBy(e => e.Status)
+            .OrderByDescending(g => g.Count())
+            .Select(g => $"  {ExceptionStatusLabels.For(g.Key)}: {g.Count()}")
+            .ToList();
+        lines.AddRange(statusCounts);
+        lines.Add("");
+
+        foreach (var e in exs.OrderBy(e => e.Id))
+        {
+            var f = e.VulnerabilityInstance?.VulnerabilityFinding;
+            var host = e.VulnerabilityInstance?.AssetHost;
+            lines.Add("================================================================================");
+            lines.Add($"Exception #{e.Id}");
+            lines.Add($"  Host:            {host?.HostName ?? "N/A"}");
+            lines.Add($"  IP:              {host?.IpAddress ?? "N/A"}");
+            lines.Add($"  Finding:         {f?.PluginName ?? "N/A"}");
+            lines.Add($"  Plugin ID:       {f?.PluginId}");
+            lines.Add($"  CVE:             {f?.Cve ?? "N/A"}");
+            lines.Add($"  Severity:        {f?.Severity ?? "N/A"}");
+            lines.Add($"  Risk Level:      {e.OverallRisk?.ToString() ?? "N/A"}");
+            lines.Add($"  Status:          {ExceptionStatusLabels.For(e.Status)}");
+            lines.Add($"  Owner:           {e.Owner?.DisplayName ?? "N/A"}");
+            lines.Add($"  Reason:          {e.NonFixableReason?.Humanize() ?? e.Reason}");
+            lines.Add($"  Expiry:          {e.ExpiryDate?.ToString("yyyy-MM-dd") ?? "N/A"}");
+            lines.Add($"  Next Review:     {e.NextReviewDate?.ToString("yyyy-MM-dd") ?? "N/A"}");
+            lines.Add($"  Created:         {e.CreatedAt:yyyy-MM-dd}");
+            lines.Add($"  Approved At:     {e.ApprovedAt?.ToString("yyyy-MM-dd HH:mm") ?? "N/A"}");
+            lines.Add($"  Closed Reason:   {e.ClosedReason?.ToString() ?? "N/A"}");
+            lines.Add($"  Closed At:       {e.ClosedAt?.ToString("yyyy-MM-dd HH:mm") ?? "N/A"}");
+            lines.Add("");
+
+            if (!string.IsNullOrWhiteSpace(e.TechnicalJustification) ||
+                !string.IsNullOrWhiteSpace(e.BusinessImpact) ||
+                !string.IsNullOrWhiteSpace(e.ComplianceImpact))
+            {
+                lines.Add("  Justification:");
+                if (!string.IsNullOrWhiteSpace(e.TechnicalJustification))
+                    lines.Add($"    Technical:    {e.TechnicalJustification}");
+                if (!string.IsNullOrWhiteSpace(e.BusinessImpact))
+                    lines.Add($"    Business:     {e.BusinessImpact}");
+                if (!string.IsNullOrWhiteSpace(e.ComplianceImpact))
+                    lines.Add($"    Compliance:   {e.ComplianceImpact}");
+                lines.Add("");
+            }
+
+            lines.Add("  Approval Chain:");
+            foreach (var step in e.ApprovalSteps.OrderBy(s => s.StepOrder))
+            {
+                var decision = step.Decision == ApprovalDecision.Pending ? "PENDING" : step.Decision.ToString();
+                lines.Add($"    Step {step.StepOrder} ({step.Stage} / {step.RequiredRole}): {decision}");
+                lines.Add($"      Decided by: {step.DecisionBy?.DisplayName ?? "N/A"} at {step.DecisionAt?.ToString("yyyy-MM-dd HH:mm") ?? "N/A"}");
+                if (!string.IsNullOrWhiteSpace(step.Comment))
+                    lines.Add($"      Comment:    {step.Comment}");
+            }
+            lines.Add("");
+
+            lines.Add($"  Evidence Count:  {e.Evidence.Count}");
+            lines.Add($"  Mitigation Count:{e.Mitigations.Count}");
+            lines.Add("");
+        }
+
+        var bytes = PdfWriter.Write("Exception Auditor Report", lines);
+        return File(bytes, "application/pdf", $"exception_auditor_report_{DateTime.UtcNow:yyyyMMdd}.pdf");
+    }
+
     private static string Csv(string? v) => $"\"{(v ?? "").Replace("\"", "\"\"")}\"";
 
     // ----------------------------------------------------------------- Vulnerability trend analytics (P8)

@@ -88,6 +88,7 @@ public class ExceptionRecord
     public ICollection<ExceptionReviewHistory> Reviews { get; set; } = new List<ExceptionReviewHistory>();
     public ICollection<ExceptionComment> Comments { get; set; } = new List<ExceptionComment>();
     public ICollection<VendorResponse> VendorResponses { get; set; } = new List<VendorResponse>();
+    public ICollection<TicketingLink> TicketingLinks { get; set; } = new List<TicketingLink>();
 }
 
 // Legacy V1 constants (retained so existing code/migrations keep compiling).

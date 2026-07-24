@@ -1,7 +1,7 @@
 # Enterprise Nessus Ingestion & Deduplication Workflow
 
 This document describes the design and implementation of the enterprise-grade scan
-ingestion & deduplication engine adopted into **VRTrackingApp** (VR Remediation Console).
+ingestion & deduplication engine adopted into **RemediateVR** (VR Remediation Console).
 It is a direct implementation of the 14-scenario specification for multi-engineer,
 concurrent Nessus report uploads.
 

@@ -199,7 +199,7 @@ public class ExceptionsController : Controller
             ViewData["Title"] = "Request Exception";
             ViewBag.Stage1Role = stage1;
             ViewBag.Owners = await _db.UserAccounts.Where(u => u.IsActive).ToListAsync();
-            return View("Request", inst);
+            return View("RequestForm", inst);
         }
 
         await _db.SaveChangesAsync();
@@ -457,72 +457,129 @@ public class ExceptionsController : Controller
         return RedirectToAction("Details", new { id });
     }
 
+    // ----------------------------------------------------------------- Ticketing integration (P8)
+    [HttpPost]
+    [Authorize(Roles = "Admin,Analyst,Remediation Owner,SecurityChampion,InfrastructureManager,NetworkManager,RiskCommittee,CISO")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddTicketingLink(int id, string system, string ticketId, string? ticketUrl, string? title)
+    {
+        var ex = await _db.ExceptionRecords.FindAsync(id);
+        if (ex == null) return NotFound();
+        if (!string.IsNullOrWhiteSpace(system) && !string.IsNullOrWhiteSpace(ticketId))
+        {
+            ex.TicketingLinks.Add(new TicketingLink
+            {
+                System = system,
+                TicketId = ticketId,
+                TicketUrl = ticketUrl,
+                Title = title,
+                LinkedByUserId = CurrentUserId()
+            });
+            await _db.SaveChangesAsync();
+        }
+        return RedirectToAction("Details", new { id });
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Admin,Analyst,Remediation Owner,SecurityChampion")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteTicketingLink(int id, int ticketingLinkId)
+    {
+        var link = await _db.TicketingLinks.FirstOrDefaultAsync(x => x.Id == ticketingLinkId && x.ExceptionRecordId == id);
+        if (link == null) return NotFound();
+        _db.TicketingLinks.Remove(link);
+        await _db.SaveChangesAsync();
+        return RedirectToAction("Details", new { id });
+    }
+
     // ----------------------------------------------------------------- Dashboard (P3)
     [HttpGet]
     public async Task<IActionResult> Dashboard()
     {
         ViewData["Title"] = "Exception Dashboard";
         var now = DateTime.UtcNow;
-        var exs = await _db.ExceptionRecords
-            .Include(e => e.VulnerabilityInstance).ThenInclude(i => i.VulnerabilityFinding)
-            .Include(e => e.VulnerabilityInstance).ThenInclude(i => i.AssetHost).ThenInclude(h => h.Asset)
-            .Include(e => e.Owner)
-            .Include(e => e.Evidence)
-            .Include(e => e.Mitigations)
+        var thirtyDaysFromNow = now.AddDays(30);
+
+        // 1. KPI aggregations in a single DB query
+        var kpisResult = await _db.ExceptionRecords
+            .GroupBy(x => 1)
+            .Select(g => new
+            {
+                Total = g.Count(),
+                Active = g.Sum(e => (e.Status == ExceptionStatus.ActiveException || e.Status == ExceptionStatus.Renewed) ? 1 : 0),
+                Pending = g.Sum(e => (e.Status == ExceptionStatus.PendingTechnicalApproval || e.Status == ExceptionStatus.PendingManagerApproval || e.Status == ExceptionStatus.PendingSecurityApproval) ? 1 : 0),
+                Critical = g.Sum(e => (e.Status == ExceptionStatus.ActiveException && e.VulnerabilityInstance.VulnerabilityFinding.Severity == "Critical") ? 1 : 0),
+                Expiring30 = g.Sum(e => (e.Status == ExceptionStatus.ActiveException && e.ExpiryDate != null && e.ExpiryDate < thirtyDaysFromNow) ? 1 : 0),
+                Expired = g.Sum(e => (e.Status == ExceptionStatus.Expired) ? 1 : 0),
+                Rejected = g.Sum(e => (e.Status == ExceptionStatus.Rejected) ? 1 : 0),
+                ReviewDue = g.Sum(e => (e.Status == ExceptionStatus.ReviewDue) ? 1 : 0),
+                Closed = g.Sum(e => (e.Status == ExceptionStatus.Closed) ? 1 : 0),
+                NeedInfo = g.Sum(e => (e.Status == ExceptionStatus.NeedMoreInfo) ? 1 : 0),
+                NoEvidence = g.Sum(e => (e.Status == ExceptionStatus.ActiveException && !e.Evidence.Any()) ? 1 : 0),
+                PendingMitigation = g.Sum(e => (e.Status == ExceptionStatus.ActiveException && e.Mitigations.Any(m => m.Status == MitigationStatus.Pending)) ? 1 : 0)
+            })
+            .FirstOrDefaultAsync();
+
+        if (kpisResult != null)
+        {
+            ViewBag.Kpis = new ExceptionKpis(
+                kpisResult.Total, kpisResult.Active, kpisResult.Pending, kpisResult.Critical, kpisResult.Expiring30,
+                kpisResult.Expired, kpisResult.Rejected, kpisResult.ReviewDue, kpisResult.Closed, kpisResult.NeedInfo,
+                kpisResult.NoEvidence, kpisResult.PendingMitigation
+            );
+        }
+        else
+        {
+            ViewBag.Kpis = new ExceptionKpis(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        }
+
+        // 2. Trend by status (grouped by Year/Month on the DB)
+        var trendData = await _db.ExceptionRecords
+            .Where(e => e.CreatedAt != default)
+            .GroupBy(e => new { e.CreatedAt.Year, e.CreatedAt.Month })
+            .Select(g => new
+            {
+                Year = g.Key.Year,
+                Month = g.Key.Month,
+                Active = g.Sum(e => (e.Status == ExceptionStatus.ActiveException || e.Status == ExceptionStatus.Renewed) ? 1 : 0),
+                Pending = g.Sum(e => (e.Status == ExceptionStatus.PendingTechnicalApproval || e.Status == ExceptionStatus.PendingManagerApproval || e.Status == ExceptionStatus.PendingSecurityApproval || e.Status == ExceptionStatus.ExceptionRequested || e.Status == ExceptionStatus.NeedMoreInfo) ? 1 : 0),
+                Rejected = g.Sum(e => (e.Status == ExceptionStatus.Rejected) ? 1 : 0),
+                Expired = g.Sum(e => (e.Status == ExceptionStatus.Expired) ? 1 : 0),
+                Closed = g.Sum(e => (e.Status == ExceptionStatus.Closed) ? 1 : 0)
+            })
+            .OrderBy(x => x.Year).ThenBy(x => x.Month)
             .ToListAsync();
 
-        bool IsActive(ExceptionStatus s) => s is ExceptionStatus.ActiveException or ExceptionStatus.Renewed;
-        bool IsPending(ExceptionStatus s) => s is ExceptionStatus.PendingTechnicalApproval
-            or ExceptionStatus.PendingManagerApproval or ExceptionStatus.PendingSecurityApproval;
+        ViewBag.Trend = trendData.Select(x => new TrendPoint(
+            $"{x.Year}-{x.Month:D2}", x.Active, x.Pending, x.Rejected, x.Expired, x.Closed
+        )).ToList();
 
-        ViewBag.Kpis = new ExceptionKpis(
-            exs.Count,
-            exs.Count(e => IsActive(e.Status)),
-            exs.Count(e => IsPending(e.Status)),
-            exs.Count(e => e.Status == ExceptionStatus.ActiveException && e.VulnerabilityInstance?.VulnerabilityFinding?.Severity == "Critical"),
-            exs.Count(e => e.Status == ExceptionStatus.ActiveException && e.ExpiryDate.HasValue && e.ExpiryDate < now.AddDays(30)),
-            exs.Count(e => e.Status == ExceptionStatus.Expired),
-            exs.Count(e => e.Status == ExceptionStatus.Rejected),
-            exs.Count(e => e.Status == ExceptionStatus.ReviewDue),
-            exs.Count(e => e.Status == ExceptionStatus.Closed),
-            exs.Count(e => e.Status == ExceptionStatus.NeedMoreInfo),
-            exs.Count(e => e.Status == ExceptionStatus.ActiveException && e.Evidence.Count == 0),
-            exs.Count(e => e.Status == ExceptionStatus.ActiveException && e.Mitigations.Any(m => m.Status == MitigationStatus.Pending))
-        );
+        // 3. By reason
+        var byReason = await _db.ExceptionRecords
+            .Where(e => e.NonFixableReason != null)
+            .GroupBy(e => e.NonFixableReason)
+            .Select(g => new { Reason = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync();
+        ViewBag.ByReason = byReason.Select(x => new NameCount(x.Reason!.Value.Humanize(), x.Count)).ToList();
 
-        // Trend by status (stacked, per created-month).
-        ViewBag.Trend = exs
-            .Where(e => e.CreatedAt != default)
-            .GroupBy(e => e.CreatedAt.ToString("yyyy-MM"))
-            .OrderBy(g => g.Key)
-            .Select(g => new TrendPoint(
-                g.Key,
-                g.Count(e => IsActive(e.Status)),
-                g.Count(e => IsPending(e.Status) || e.Status is ExceptionStatus.ExceptionRequested or ExceptionStatus.NeedMoreInfo),
-                g.Count(e => e.Status == ExceptionStatus.Rejected),
-                g.Count(e => e.Status == ExceptionStatus.Expired),
-                g.Count(e => e.Status == ExceptionStatus.Closed)))
-            .ToList();
+        // 4. By owner
+        var byOwner = await _db.ExceptionRecords
+            .GroupBy(e => e.Owner != null ? e.Owner.DisplayName : "Unassigned")
+            .Select(g => new { Key = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync();
+        ViewBag.ByOwner = byOwner.Select(x => new NameCount(x.Key ?? "Unassigned", x.Count)).ToList();
 
-        // By reason, owner, business unit.
-        ViewBag.ByReason = exs
-            .Where(e => e.NonFixableReason.HasValue)
-            .GroupBy(e => e.NonFixableReason!.Value)
-            .Select(g => new NameCount(g.Key.Humanize(), g.Count()))
+        // 5. By business unit
+        var byBu = await _db.ExceptionRecords
+            .GroupBy(e => e.VulnerabilityInstance != null && e.VulnerabilityInstance.AssetHost != null && e.VulnerabilityInstance.AssetHost.Asset != null 
+                ? (e.VulnerabilityInstance.AssetHost.Asset.BusUnit ?? e.VulnerabilityInstance.AssetHost.Asset.Location ?? "Unknown") 
+                : "Unknown")
+            .Select(g => new { Key = g.Key, Count = g.Count() })
             .OrderByDescending(x => x.Count)
-            .ToList();
-        ViewBag.ByOwner = exs
-            .GroupBy(e => e.Owner?.DisplayName ?? "Unassigned")
-            .Select(g => new NameCount(g.Key, g.Count()))
-            .OrderByDescending(x => x.Count)
-            .ToList();
-        ViewBag.ByBu = exs
-            .GroupBy(e => e.VulnerabilityInstance?.AssetHost?.Asset?.BusUnit
-                        ?? e.VulnerabilityInstance?.AssetHost?.Asset?.Location
-                        ?? "Unknown")
-            .Select(g => new NameCount(g.Key, g.Count()))
-            .OrderByDescending(x => x.Count)
-            .ToList();
+            .ToListAsync();
+        ViewBag.ByBu = byBu.Select(x => new NameCount(x.Key ?? "Unknown", x.Count)).ToList();
 
         return View();
     }

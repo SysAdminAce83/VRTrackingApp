@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using VRTrackingApp.Data.Models;
+using VRTrackingApp.Web.Services.Notifications;
 
 namespace VRTrackingApp.Web.Services.Exceptions;
 
@@ -21,11 +22,15 @@ public enum WorkflowResult
 /// </summary>
 public class ExceptionWorkflowService
 {
+    private readonly INotificationService? _notify;
+
     /// <summary>
     /// Initialise the approval chain for a freshly requested exception: records the
     /// resolved stage-1 role, marks it <see cref="ExceptionStatus.PendingTechnicalApproval"/>
     /// and creates the three ordered approval steps (Technical → Manager → Security).
     /// </summary>
+    public ExceptionWorkflowService(INotificationService? notify = null) => _notify = notify;
+
     public void StartApproval(ExceptionRecord ex, string stage1Role)
     {
         ex.Stage1Role = stage1Role;

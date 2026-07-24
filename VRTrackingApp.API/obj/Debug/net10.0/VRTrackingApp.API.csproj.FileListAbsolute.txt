@@ -82,3 +82,4 @@ D:\Project_WebApp\VRTrackingApp\VRTrackingApp.API\obj\Debug\net10.0\refint\VRTra
 D:\Project_WebApp\VRTrackingApp\VRTrackingApp.API\obj\Debug\net10.0\VRTrackingApp.API.pdb
 D:\Project_WebApp\VRTrackingApp\VRTrackingApp.API\obj\Debug\net10.0\VRTrackingApp.API.genruntimeconfig.cache
 D:\Project_WebApp\VRTrackingApp\VRTrackingApp.API\obj\Debug\net10.0\ref\VRTrackingApp.API.dll
+D:\Project_WebApp\VRTrackingApp\VRTrackingApp.API\obj\Debug\net10.0\VRTrackingApp.API.sourcelink.json

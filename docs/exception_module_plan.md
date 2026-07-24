@@ -98,7 +98,7 @@ Add roles `InfrastructureManager`, `NetworkManager`, `RiskCommittee`, `CISO` + d
 
 ## 10. Phased roadmap
 
-P0 model+migration+services+seed → P1 request form + list + detail + creation entry point → P2 approval chain actions → P3 dashboard → P4 review/expiry jobs → P5 notifications → P6 evidence/mitigation/vendor mgmt → P7 auditor reports → P8 (nice-to-have) auto-close on rescan, ServiceNow/Jira links, trends.
+P0 model+migration+services+seed → P1 request form + list + detail + creation entry point → P2 approval chain actions → P3 dashboard → P4 review/expiry jobs → P5 notifications → P6 evidence/mitigation/vendor mgmt → P7 auditor reports ✅ → P8 auto-close on rescan ✅, ServiceNow/Jira links ✅, trends ✅.
 
 ## 11. Known data gaps (render "Unavailable" or add later)
 
