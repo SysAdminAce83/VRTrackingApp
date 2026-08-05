@@ -113,10 +113,17 @@ public class AssetController : Controller
     [HttpGet]
     public IActionResult Create()
     {
-        ViewData["Title"] = "Add device";
-        ViewBag.SuggestedCategories = SuggestedCategories.Select(TitleCase).ToArray();
-        ViewBag.SuggestedSubCategories = SuggestedSubCategories.Select(TitleCase).ToArray();
-        return View(new Asset());
+        try
+        {
+            ViewData["Title"] = "Add device";
+            ViewBag.SuggestedCategories = SuggestedCategories.Select(TitleCase).ToArray();
+            ViewBag.SuggestedSubCategories = SuggestedSubCategories.Select(TitleCase).ToArray();
+            return View(new Asset());
+        }
+        catch (Exception ex)
+        {
+            return Content(ex.ToString());
+        }
     }
 
     [HttpPost]

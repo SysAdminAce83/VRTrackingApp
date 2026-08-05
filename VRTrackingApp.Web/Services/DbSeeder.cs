@@ -207,6 +207,9 @@ public static class DbSeeder
             }
         }
 
+        // ---- Compliance / GRC Seed Data ----
+        await SeedComplianceDataAsync(db);
+
         await db.SaveChangesAsync();
 
         // =====================================================================
@@ -399,5 +402,177 @@ public static class DbSeeder
         };
         db.VulnerabilityFindings.Add(finding);
         return finding;
+    }
+
+    private static async Task SeedComplianceDataAsync(VRTrackingAppContext db)
+    {
+        if (await db.Frameworks.AnyAsync()) return;
+
+        var cisV8 = new Framework
+        {
+            Name = "CIS Controls v8",
+            ShortName = "CIS Controls v8",
+            Version = "8.0",
+            Description = "The CIS Controls v8 framework provides a prioritized set of actions to protect organizations and data from known attack vectors.",
+            CreatedAt = DateTime.UtcNow
+        };
+        var nistCsf = new Framework
+        {
+            Name = "NIST Cybersecurity Framework",
+            ShortName = "NIST CSF",
+            Version = "2.0",
+            Description = "The NIST CSF provides a policy framework of computer security guidance for how private sector organizations can assess and improve their ability to prevent, detect, and respond to cyber attacks.",
+            CreatedAt = DateTime.UtcNow
+        };
+        var nist800_53 = new Framework
+        {
+            Name = "NIST SP 800-53 Rev 5",
+            ShortName = "NIST 800-53",
+            Version = "Rev 5",
+            Description = "Security and Privacy Controls for Information Systems and Organizations.",
+            CreatedAt = DateTime.UtcNow
+        };
+        var iso27001 = new Framework
+        {
+            Name = "ISO/IEC 27001:2022",
+            ShortName = "ISO 27001",
+            Version = "2022",
+            Description = "Information security management systems requirements.",
+            CreatedAt = DateTime.UtcNow
+        };
+        var pciDss = new Framework
+        {
+            Name = "PCI DSS v4.0",
+            ShortName = "PCI-DSS",
+            Version = "4.0",
+            Description = "Payment Card Industry Data Security Standard.",
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Frameworks.AddRange(cisV8, nistCsf, nist800_53, iso27001, pciDss);
+        await db.SaveChangesAsync();
+
+        var cisFamilies = new[]
+        {
+            new ControlFamily { FamilyId = "CIS-IG", Name = "Governance and Culture", Description = "Establish and manage cybersecurity risk management strategy.", FrameworkId = cisV8.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "CIS-IM", Name = "Asset Management", Description = "Manage assets to establish cybersecurity risk management.", FrameworkId = cisV8.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "CIS-PR", Name = "Protection", Description = "Implement safeguards to ensure delivery of critical services.", FrameworkId = cisV8.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "CIS-DE", Name = "Detection", Description = "Implement activities to identify cybersecurity events.", FrameworkId = cisV8.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "CIS-RS", Name = "Response", Description = "Implement activities to take action regarding detected incidents.", FrameworkId = cisV8.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "CIS-REC", Name = "Recovery", Description = "Implement activities to maintain plans and restore capabilities.", FrameworkId = cisV8.Id, CreatedAt = DateTime.UtcNow },
+        };
+        db.ControlFamilies.AddRange(cisFamilies);
+
+        var nistFamilies = new[]
+        {
+            new ControlFamily { FamilyId = "NIST-GOV", Name = "Govern", Description = "Establish cybersecurity risk management strategy.", FrameworkId = nistCsf.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "NIST-IDENT", Name = "Identify", Description = "Understand the organization's cybersecurity risk.", FrameworkId = nistCsf.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "NIST-PROTECT", Name = "Protect", Description = "Implement safeguards to ensure delivery of critical services.", FrameworkId = nistCsf.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "NIST-DETECT", Name = "Detect", Description = "Identify cybersecurity events in a timely manner.", FrameworkId = nistCsf.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "NIST-RESPOND", Name = "Respond", Description = "Take action regarding detected cybersecurity incidents.", FrameworkId = nistCsf.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "NIST-RECOVER", Name = "Recover", Description = "Restore capabilities impaired by cybersecurity incidents.", FrameworkId = nistCsf.Id, CreatedAt = DateTime.UtcNow },
+        };
+        db.ControlFamilies.AddRange(nistFamilies);
+
+        var nist800Families = new[]
+        {
+            new ControlFamily { FamilyId = "N800-AC", Name = "Access Control", Description = "Controls to limit access to information systems.", FrameworkId = nist800_53.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "N800-AU", Name = "Audit and Accountability", Description = "Capture and examine audit records.", FrameworkId = nist800_53.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "N800-IR", Name = "Incident Response", Description = "Manage and respond to cybersecurity incidents.", FrameworkId = nist800_53.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "N800-SC", Name = "System and Communications Protection", Description = "Protect information at rest and in transit.", FrameworkId = nist800_53.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "N800-SI", Name = "System and Information Integrity", Description = "Detect, respond to, and correct security weaknesses.", FrameworkId = nist800_53.Id, CreatedAt = DateTime.UtcNow },
+        };
+        db.ControlFamilies.AddRange(nist800Families);
+
+        var isoFamilies = new[]
+        {
+            new ControlFamily { FamilyId = "ISO-ORG", Name = "Organizational Controls", Description = "Controls at the organizational level.", FrameworkId = iso27001.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "ISO-PEOPLE", Name = "People Controls", Description = "Controls related to human factors.", FrameworkId = iso27001.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "ISO-PHYS", Name = "Physical Controls", Description = "Controls to protect physical assets.", FrameworkId = iso27001.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "ISO-TECH", Name = "Technological Controls", Description = "Controls using technology mechanisms.", FrameworkId = iso27001.Id, CreatedAt = DateTime.UtcNow },
+        };
+        db.ControlFamilies.AddRange(isoFamilies);
+
+        var pciFamilies = new[]
+        {
+            new ControlFamily { FamilyId = "PCI-REQ1", Name = "Build and Maintain Secure Networks", Description = "Install and maintain network security controls.", FrameworkId = pciDss.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "PCI-REQ2", Name = "Protect Cardholder Data", Description = "Protect stored and transmitted cardholder data.", FrameworkId = pciDss.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "PCI-REQ3", Name = "Maintain Vulnerability Management", Description = "Protect systems against malware and vulnerabilities.", FrameworkId = pciDss.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "PCI-REQ4", Name = "Implement Strong Access Controls", Description = "Restrict access to cardholder data.", FrameworkId = pciDss.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "PCI-REQ5", Name = "Regularly Monitor and Test Networks", Description = "Monitor and test networks to ensure security.", FrameworkId = pciDss.Id, CreatedAt = DateTime.UtcNow },
+            new ControlFamily { FamilyId = "PCI-REQ6", Name = "Maintain Information Security Policies", Description = "Maintain policies that support information security.", FrameworkId = pciDss.Id, CreatedAt = DateTime.UtcNow },
+        };
+        db.ControlFamilies.AddRange(pciFamilies);
+        await db.SaveChangesAsync();
+
+        var cisControls = new[]
+        {
+            new ComplianceControl { ControlId = "CIS-1.1", Name = "Establish an Asset Inventory", Framework = "CIS Controls v8", ControlFamilyId = cisFamilies[1].Id, Description = "Maintain an accurate and complete inventory of assets.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "CIS-1.2", Name = "Establish an Asset Inventory Process", Framework = "CIS Controls v8", ControlFamilyId = cisFamilies[1].Id, Description = "Define and maintain a process for asset inventory.", Impact = ComplianceImpact.Medium, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "CIS-2.1", Name = "Establish a Software Inventory", Framework = "CIS Controls v8", ControlFamilyId = cisFamilies[1].Id, Description = "Maintain an accurate and complete inventory of software.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "CIS-3.1", Name = "Establish Secure Configurations", Framework = "CIS Controls v8", ControlFamilyId = cisFamilies[2].Id, Description = "Define and implement secure configurations for assets.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "CIS-4.1", Name = "Continuous Vulnerability Management", Framework = "CIS Controls v8", ControlFamilyId = cisFamilies[2].Id, Description = "Continuously identify, assess, and remediate vulnerabilities.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "CIS-5.1", Name = "Account Management", Framework = "CIS Controls v8", ControlFamilyId = cisFamilies[2].Id, Description = "Manage accounts to ensure authorized access.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "CIS-5.2", Name = "Authentication Management", Framework = "CIS Controls v8", ControlFamilyId = cisFamilies[2].Id, Description = "Implement strong authentication mechanisms.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "CIS-7.1", Name = "Continuous Data Protection", Framework = "CIS Controls v8", ControlFamilyId = cisFamilies[2].Id, Description = "Implement continuous data protection measures.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "CIS-8.1", Name = "Audit Log Management", Framework = "CIS Controls v8", ControlFamilyId = cisFamilies[3].Id, Description = "Collect and manage audit logs for detection.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "CIS-8.2", Name = "Event Logging", Framework = "CIS Controls v8", ControlFamilyId = cisFamilies[3].Id, Description = "Log security-relevant events across the organization.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "CIS-9.1", Name = "Incident Response Management", Framework = "CIS Controls v8", ControlFamilyId = cisFamilies[4].Id, Description = "Manage incident response processes.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "CIS-10.1", Name = "Incident Response Plan", Framework = "CIS Controls v8", ControlFamilyId = cisFamilies[5].Id, Description = "Maintain and test incident response plans.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+        };
+        db.ComplianceControls.AddRange(cisControls);
+
+        var nistCsfControls = new[]
+        {
+            new ComplianceControl { ControlId = "NIST-CSF-GOV-1", Name = "Identify Cybersecurity Risk", Framework = "NIST CSF", ControlFamilyId = nistFamilies[0].Id, Description = "Understand the organization's cybersecurity risk.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "NIST-CSF-IDENT-1", Name = "Asset Management", Framework = "NIST CSF", ControlFamilyId = nistFamilies[1].Id, Description = "Identify and manage assets across the organization.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "NIST-CSF-PROTECT-1", Name = "Identity Management and Access Control", Framework = "NIST CSF", ControlFamilyId = nistFamilies[2].Id, Description = "Implement identity management and access control.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "NIST-CSF-DETECT-1", Name = "Continuous Monitoring", Framework = "NIST CSF", ControlFamilyId = nistFamilies[3].Id, Description = "Implement continuous monitoring for security events.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "NIST-CSF-RESPOND-1", Name = "Incident Response", Framework = "NIST CSF", ControlFamilyId = nistFamilies[4].Id, Description = "Implement incident response capabilities.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "NIST-CSF-RECOVER-1", Name = "Recovery Planning", Framework = "NIST CSF", ControlFamilyId = nistFamilies[5].Id, Description = "Plan and implement recovery procedures.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+        };
+        db.ComplianceControls.AddRange(nistCsfControls);
+
+        var nist800Controls = new[]
+        {
+            new ComplianceControl { ControlId = "NIST-AC-2", Name = "Account Management", Framework = "NIST 800-53", ControlFamilyId = nist800Families[0].Id, Description = "Manage information system accounts.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "NIST-AC-3", Name = "Access Enforcement", Framework = "NIST 800-53", ControlFamilyId = nist800Families[0].Id, Description = "Enforce approved authorizations.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "NIST-AU-2", Name = "Audit Record Content", Framework = "NIST 800-53", ControlFamilyId = nist800Families[1].Id, Description = "Configure audit record content.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "NIST-AU-6", Name = "Audit Record Review Analysis and Reporting", Framework = "NIST 800-53", ControlFamilyId = nist800Families[1].Id, Description = "Review and analyze audit records.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "NIST-IR-4", Name = "Incident Handling", Framework = "NIST 800-53", ControlFamilyId = nist800Families[2].Id, Description = "Manage incident handling process.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "NIST-SC-8", Name = "Transmission Confidentiality and Integrity", Framework = "NIST 800-53", ControlFamilyId = nist800Families[3].Id, Description = "Protect data in transit.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "NIST-SI-2", Name = "Flaw Remediation", Framework = "NIST 800-53", ControlFamilyId = nist800Families[4].Id, Description = "Remediate identified flaws in a timely manner.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "NIST-SI-4", Name = "System Monitoring", Framework = "NIST 800-53", ControlFamilyId = nist800Families[4].Id, Description = "Monitor systems for anomalies and threats.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+        };
+        db.ComplianceControls.AddRange(nist800Controls);
+
+        var isoControls = new[]
+        {
+            new ComplianceControl { ControlId = "ISO-A.5.1", Name = "Policies for Information Security", Framework = "ISO 27001", ControlFamilyId = isoFamilies[0].Id, Description = "Establish information security policies.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "ISO-A.6.1", Name = "Organization of Information Security", Framework = "ISO 27001", ControlFamilyId = isoFamilies[0].Id, Description = "Organize information security within the organization.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "ISO-A.7.1", Name = "Human Resource Security", Framework = "ISO 27001", ControlFamilyId = isoFamilies[1].Id, Description = "Ensure personnel are aware of security responsibilities.", Impact = ComplianceImpact.Medium, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "ISO-A.8.1", Name = "User Endpoint Devices", Framework = "ISO 27001", ControlFamilyId = isoFamilies[3].Id, Description = "Secure user endpoint devices.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "ISO-A.8.5", Name = "Secure Authentication", Framework = "ISO 27001", ControlFamilyId = isoFamilies[3].Id, Description = "Implement secure authentication mechanisms.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "ISO-A.8.8", Name = "Management of Technical Vulnerabilities", Framework = "ISO 27001", ControlFamilyId = isoFamilies[3].Id, Description = "Manage technical vulnerabilities in a timely manner.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "ISO-A.8.13", Name = "Information Backup", Framework = "ISO 27001", ControlFamilyId = isoFamilies[3].Id, Description = "Implement information backup policies.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "ISO-A.8.15", Name = "Logging", Framework = "ISO 27001", ControlFamilyId = isoFamilies[3].Id, Description = "Implement logging and monitoring.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+        };
+        db.ComplianceControls.AddRange(isoControls);
+
+        var pciControls = new[]
+        {
+            new ComplianceControl { ControlId = "PCI-REQ1.1", Name = "Install and Maintain Network Security Controls", Framework = "PCI-DSS", ControlFamilyId = pciFamilies[0].Id, Description = "Install firewalls and other network security controls.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "PCI-REQ2.1", Name = "Do Not Store Sensitive Authentication Data", Framework = "PCI-DSS", ControlFamilyId = pciFamilies[1].Id, Description = "Do not store sensitive authentication data after authorization.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "PCI-REQ3.1", Name = "Protect Stored Account Data", Framework = "PCI-DSS", ControlFamilyId = pciFamilies[1].Id, Description = "Protect stored cardholder data.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "PCI-REQ4.1", Name = "Encrypt Transmission of Cardholder Data", Framework = "PCI-DSS", ControlFamilyId = pciFamilies[1].Id, Description = "Encrypt cardholder data in transit.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "PCI-REQ5.1", Name = "Protect All Systems Against Malware", Framework = "PCI-DSS", ControlFamilyId = pciFamilies[2].Id, Description = "Implement anti-malware on all systems.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "PCI-REQ6.1", Name = "Develop and Maintain Secure Systems", Framework = "PCI-DSS", ControlFamilyId = pciFamilies[2].Id, Description = "Develop and maintain secure systems and applications.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "PCI-REQ7.1", Name = "Restrict Access to Cardholder Data", Framework = "PCI-DSS", ControlFamilyId = pciFamilies[3].Id, Description = "Restrict access to cardholder data on a need-to-know basis.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "PCI-REQ8.1", Name = "Identify Users and Authenticate Access", Framework = "PCI-DSS", ControlFamilyId = pciFamilies[3].Id, Description = "Identify and authenticate all users.", Impact = ComplianceImpact.Critical, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "PCI-REQ10.1", Name = "Log and Monitor Access", Framework = "PCI-DSS", ControlFamilyId = pciFamilies[4].Id, Description = "Log and monitor all access to cardholder data.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "PCI-REQ11.1", Name = "Regularly Test Security Systems", Framework = "PCI-DSS", ControlFamilyId = pciFamilies[4].Id, Description = "Regularly test security systems and processes.", Impact = ComplianceImpact.High, CreatedAt = DateTime.UtcNow },
+            new ComplianceControl { ControlId = "PCI-REQ12.1", Name = "Maintain Information Security Policy", Framework = "PCI-DSS", ControlFamilyId = pciFamilies[5].Id, Description = "Maintain an information security policy.", Impact = ComplianceImpact.Medium, CreatedAt = DateTime.UtcNow },
+        };
+        db.ComplianceControls.AddRange(pciControls);
+        await db.SaveChangesAsync();
     }
 }

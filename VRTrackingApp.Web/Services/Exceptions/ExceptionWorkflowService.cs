@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using VRTrackingApp.Data.Models;
+using VRTrackingApp.Web.Services.MSRC;
+using VRTrackingApp.Web.Services.MSRC.Models;
 using VRTrackingApp.Web.Services.Notifications;
 
 namespace VRTrackingApp.Web.Services.Exceptions;
@@ -23,13 +26,18 @@ public enum WorkflowResult
 public class ExceptionWorkflowService
 {
     private readonly INotificationService? _notify;
+    private readonly IVulnerabilityEnrichmentService? _enrichment;
 
     /// <summary>
     /// Initialise the approval chain for a freshly requested exception: records the
     /// resolved stage-1 role, marks it <see cref="ExceptionStatus.PendingTechnicalApproval"/>
     /// and creates the three ordered approval steps (Technical → Manager → Security).
     /// </summary>
-    public ExceptionWorkflowService(INotificationService? notify = null) => _notify = notify;
+    public ExceptionWorkflowService(INotificationService? notify = null, IVulnerabilityEnrichmentService? enrichment = null)
+    {
+        _notify = notify;
+        _enrichment = enrichment;
+    }
 
     public void StartApproval(ExceptionRecord ex, string stage1Role)
     {
@@ -45,6 +53,70 @@ public class ExceptionWorkflowService
             ex.ApprovalSteps.Add(new ExceptionApprovalStep { StepOrder = 2, Stage = ApprovalStage.Manager, RequiredRole = AppRoles.RiskCommittee, Decision = ApprovalDecision.Pending });
             ex.ApprovalSteps.Add(new ExceptionApprovalStep { StepOrder = 3, Stage = ApprovalStage.Security, RequiredRole = AppRoles.Ciso, Decision = ApprovalDecision.Pending });
         }
+    }
+
+    /// <summary>
+    /// Populate vendor response from MSRC data if the finding has a CVE.
+    /// This can be called when creating a vendor response or during exception review.
+    /// </summary>
+    public async Task<VendorResponse?> PopulateVendorResponseFromMSRCAsync(ExceptionRecord ex, CancellationToken ct = default)
+    {
+        if (_enrichment == null || ex.VulnerabilityInstance?.VulnerabilityFinding?.Cve == null)
+            return null;
+
+        var cve = ex.VulnerabilityInstance.VulnerabilityFinding.Cve;
+        var enrichment = await _enrichment.EnrichByCVEAsync(cve, ct);
+
+        if (enrichment == null)
+            return null;
+
+        var vendorResponse = new VendorResponse
+        {
+            ExceptionRecordId = ex.Id,
+            Vendor = "Microsoft",
+            ResponseText = BuildVendorResponseText(enrichment),
+            PatchEtaDate = enrichment.MicrosoftReleaseDate?.DateTime ?? enrichment.MicrosoftReleaseDate?.DateTime,
+            ReceivedAt = DateTime.UtcNow
+        };
+
+        ex.VendorResponses ??= new List<VendorResponse>();
+        ex.VendorResponses.Add(vendorResponse);
+
+        return vendorResponse;
+    }
+
+    private static string BuildVendorResponseText(MSRCEnrichmentData enrichment)
+    {
+        var parts = new List<string>();
+
+        if (!string.IsNullOrEmpty(enrichment.MicrosoftAdvisoryId))
+            parts.Add($"Microsoft Advisory: {enrichment.MicrosoftAdvisoryId}");
+
+        if (!string.IsNullOrEmpty(enrichment.MicrosoftBulletinId))
+            parts.Add($"Bulletin: {enrichment.MicrosoftBulletinId}");
+
+        if (enrichment.KBNumbers?.Length > 0)
+            parts.Add($"KB Articles: {string.Join(", ", enrichment.KBNumbers)}");
+
+        if (!string.IsNullOrEmpty(enrichment.ExploitabilityAssessment))
+            parts.Add($"Exploitability: {enrichment.ExploitabilityAssessment}");
+
+        if (enrichment.MicrosoftReleaseDate.HasValue)
+            parts.Add($"Patch Release Date: {enrichment.MicrosoftReleaseDate.Value:yyyy-MM-dd}");
+
+        if (!string.IsNullOrEmpty(enrichment.Workaround))
+            parts.Add($"Workaround: {enrichment.Workaround}");
+
+        if (!string.IsNullOrEmpty(enrichment.FAQUrl))
+            parts.Add($"FAQ: {enrichment.FAQUrl}");
+
+        if (!string.IsNullOrEmpty(enrichment.CVRFId))
+            parts.Add($"CVRF Document: {enrichment.CVRFId}");
+
+        if (!string.IsNullOrEmpty(enrichment.CSAFId))
+            parts.Add($"CSAF Document: {enrichment.CSAFId}");
+
+        return string.Join("\n", parts);
     }
 
     /// <summary>True when any of the caller's roles may act on the current approval step.</summary>

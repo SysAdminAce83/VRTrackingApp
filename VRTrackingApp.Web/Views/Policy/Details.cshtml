@@ -1,0 +1,85 @@
+@model VRTrackingApp.Data.Models.Policy
+@using VRTrackingApp.Data.Models
+@{
+    ViewData["Title"] = "Policy Details: " + Model.Title;
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Policy Details</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="Dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="Policy">Policies</a></li>
+        <li class="breadcrumb-item active">Details</li>
+    </ol>
+
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <a asp-action="Index" class="btn btn-outline-secondary">← Back to List</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-secondary me-2">Edit</a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Policy Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Title</dt>
+                        <dd class="col-sm-9">@Model.Title</dd>
+                        <dt class="col-sm-3">Description</dt>
+                        <dd class="col-sm-9">@Model.Description</dd>
+                        <dt class="col-sm-3">Category</dt>
+                        <dd class="col-sm-9">@Model.Category</dd>
+                        <dt class="col-sm-3">Version</dt>
+                        <dd class="col-sm-9">@Model.Version</dd>
+                        <dt class="col-sm-3">Effective Date</dt>
+                        <dd class="col-sm-9">@Model.EffectiveDate.ToString("yyyy-MM-dd")</dd>
+                        <dt class="col-sm-3">Review Date</dt>
+                        <dd class="col-sm-9">@Model.ReviewDate.ToString("yyyy-MM-dd")</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Ownership & Status</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Owner</dt>
+                        <dd class="col-sm-9">@(Model.Owner?.UserName ?? "Unassigned")</dd>
+                        <dt class="col-sm-3">Created At</dt>
+                        <dd class="col-sm-9">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+                        <dt class="col-sm-3">Updated At</dt>
+                        <dd class="col-sm-9">@(Model.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "N/A")</dd>
+                        <dt class="col-sm-3">Status</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge bg-@(Model.Status == "Draft" ? "secondary" : Model.Status == "Under Review" ? "warning" : Model.Status == "Approved" ? "success" : "danger")">
+                                @Model.Status
+                            </span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Audit Trail</h5>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Created By</dt>
+                <dd class="col-sm-9">@(Model.CreatedBy?.UserName ?? "System")</dd>
+                <dt class="col-sm-3">Updated By</dt>
+                <dd class="col-sm-9">@(Model.UpdatedBy?.UserName ?? "None")</dd>
+            </dl>
+        </div>
+    </div>
+</div>

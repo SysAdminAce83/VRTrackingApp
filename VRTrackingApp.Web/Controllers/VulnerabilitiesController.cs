@@ -67,6 +67,15 @@ public class VulnerabilitiesController : Controller
             .Where(j => j.VulnerabilityInstanceId == id)
             .OrderByDescending(j => j.Id)
             .FirstOrDefaultAsync();
+
+        if (inst.VulnerabilityFinding?.Cve != null)
+        {
+            ViewBag.ComplianceLinks = await _db.FindingComplianceLinks
+                .Include(fcl => fcl.Control)
+                .Where(fcl => fcl.VulnerabilityFindingId == inst.VulnerabilityFinding.Id)
+                .ToListAsync();
+        }
+
         return View(inst);
     }
 

@@ -92,19 +92,11 @@ public class WinRmWindowsUpdateProvider : IRemediationProvider
             return ProviderStepResult.Ok(RemediationJobStates.NotApplicable,
                 "No KB number identified — cannot install automatically.", "");
 
-        var remote = $$"""
-            $ErrorActionPreference = 'Stop'
-            $kb = '{{ctx.PatchId}}'
-            $session = New-Object -ComObject Microsoft.Update.Session
-            $searcher = $session.CreateUpdateSearcher()
-            $r = $searcher.Search("IsInstalled=0 and Type='Software'")
-            $coll = New-Object -ComObject Microsoft.Update.UpdateColl
-            foreach ($u in $r.Updates) { foreach ($k in $u.KBArticleIDs) { if (("KB$k") -ieq $kb) { $u.AcceptEula(); [void]$coll.Add($u) } } }
-            if ($coll.Count -eq 0) { [pscustomobject]@{ Status='NotAvailable' } | ConvertTo-Json -Compress; return }
-            $dl = $session.CreateUpdateDownloader(); $dl.Updates = $coll; [void]$dl.Download()
-            $inst = $session.CreateUpdateInstaller(); $inst.Updates = $coll; $res = $inst.Install()
-            [pscustomobject]@{ Status='Installed'; ResultCode=$res.ResultCode; RebootRequired=$res.RebootRequired } | ConvertTo-Json -Compress
-            """;
+        // If we have a direct download URL from MSRC enrichment, use it
+        var downloadUrl = ctx.PatchDownloadUrl;
+        var allKbs = ctx.AllKbNumbers;
+
+        var remote = BuildInstallScript(ctx.PatchId, downloadUrl);
 
         var (ok, stdout, stderr) = await RunAsync(ctx.Host, remote, ct);
         if (!ok)
@@ -123,15 +115,51 @@ public class WinRmWindowsUpdateProvider : IRemediationProvider
             var reboot = root.GetProperty("RebootRequired").GetBoolean();
             var success = code == 2 || code == 3;
 
+            var source = root.TryGetProperty("Source", out var src) ? src.GetString() : "WUA";
+            var prefix = source == "DirectDownload" ? "Downloaded & installed" : "Installed";
+
             return success
                 ? ProviderStepResult.Ok(RemediationJobStates.Succeeded,
-                    reboot ? $"{ctx.PatchId} INSTALLED. Reboot required." : $"{ctx.PatchId} INSTALLED and verified.", stdout)
+                    reboot ? $"{ctx.PatchId} {prefix}. Reboot required." : $"{ctx.PatchId} {prefix} and verified.", stdout)
                 : ProviderStepResult.Fail($"{ctx.PatchId} install returned code {code}.", stdout);
         }
         catch (Exception ex)
         {
             return ProviderStepResult.Fail("Unexpected response from host.", ex + "\n" + stdout);
         }
+    }
+
+    private static string BuildInstallScript(string patchId, string? downloadUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(downloadUrl))
+        {
+            return $$"""
+                $ErrorActionPreference = 'Stop'
+                $kb = '{{patchId}}'
+                $downloadUrl = '{{downloadUrl}}'
+                $localPath = "$env:TEMP\{{patchId}}.msu"
+                Write-Host "Downloading from $downloadUrl..."
+                try { Invoke-WebRequest -Uri $downloadUrl -OutFile $localPath -UseBasicParsing } catch { Write-Error "Download failed: $_"; exit 1 }
+                Write-Host "Installing $localPath..."
+                $result = Start-Process -FilePath 'wusa.exe' -ArgumentList "$localPath /quiet /norestart" -Wait -PassThru
+                $rebootRequired = $result.ExitCode -eq 3010
+                [pscustomobject]@{ Status='Installed'; ResultCode=$result.ExitCode; RebootRequired=$rebootRequired; Source='DirectDownload' } | ConvertTo-Json -Compress
+                """;
+        }
+
+        return $$"""
+            $ErrorActionPreference = 'Stop'
+            $kb = '{{patchId}}'
+            $session = New-Object -ComObject Microsoft.Update.Session
+            $searcher = $session.CreateUpdateSearcher()
+            $r = $searcher.Search("IsInstalled=0 and Type='Software'")
+            $coll = New-Object -ComObject Microsoft.Update.UpdateColl
+            foreach ($u in $r.Updates) { foreach ($k in $u.KBArticleIDs) { if (("KB$k") -ieq $kb) { $u.AcceptEula(); [void]$coll.Add($u) } } }
+            if ($coll.Count -eq 0) { [pscustomobject]@{ Status='NotAvailable' } | ConvertTo-Json -Compress; return }
+            $dl = $session.CreateUpdateDownloader(); $dl.Updates = $coll; [void]$dl.Download()
+            $inst = $session.CreateUpdateInstaller(); $inst.Updates = $coll; $res = $inst.Install()
+            [pscustomobject]@{ Status='Installed'; ResultCode=$res.ResultCode; RebootRequired=$res.RebootRequired } | ConvertTo-Json -Compress
+            """;
     }
 
     // ---- Registry configuration remediation (e.g. Intel BHI) -------------------

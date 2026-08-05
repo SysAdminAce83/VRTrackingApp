@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Server.IISIntegration;
 using Microsoft.EntityFrameworkCore;
 using VRTrackingApp.Data.Models;
 using VRTrackingApp.Web.Services;
+using VRTrackingApp.Web.Services.Compliance;
+using VRTrackingApp.Web.Services.Exceptions;
+using VRTrackingApp.Web.Services.MSRC;
+using VRTrackingApp.Web.Services.NVD;
 using VRTrackingApp.Web.Services.Remediation;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -56,6 +60,27 @@ else
 builder.Services.AddScoped<ScanImportService>();
 builder.Services.AddScoped<ScanIngestionService>();
 
+// MSRC Enrichment Services
+builder.Services.AddHttpClient<IMsrcService, MsrcService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.msrc.microsoft.com/");
+    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+});
+builder.Services.AddScoped<IVulnerabilityEnrichmentService, VulnerabilityEnrichmentService>();
+
+// NVD Enrichment Services
+builder.Services.AddHttpClient<INvdService, NvdService>(client =>
+{
+    client.BaseAddress = new Uri("https://services.nvd.nist.gov/rest/json/cves/2.0");
+    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+});
+builder.Services.AddScoped<INvdEnrichmentService, NvdEnrichmentService>();
+
+// Compliance / GRC Services
+builder.Services.AddScoped<IComplianceControlService, ComplianceControlService>();
+builder.Services.AddScoped<IFindingComplianceLinkService, FindingComplianceLinkService>();
+builder.Services.AddScoped<IComplianceReportService, ComplianceReportService>();
+
 // Exception module V2 services
 builder.Services.AddScoped<VRTrackingApp.Web.Services.Exceptions.ExceptionRoutingService>();
 builder.Services.AddScoped<VRTrackingApp.Web.Services.Exceptions.ExceptionWorkflowService>();
@@ -90,6 +115,8 @@ builder.Services.AddScoped<RemediationEngine>();
 builder.Services.AddSingleton<IRemediationQueue, RemediationQueue>();
 builder.Services.AddHostedService<RemediationBackgroundService>();
 builder.Services.AddHostedService<VRTrackingApp.Web.Services.Exceptions.ExceptionLifecycleHostedService>();
+builder.Services.AddHostedService<MsrcSyncBackgroundService>();
+builder.Services.AddHostedService<NvdSyncBackgroundService>();
 
 var app = builder.Build();
 

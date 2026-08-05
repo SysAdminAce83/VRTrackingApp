@@ -2,6 +2,8 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using VRTrackingApp.Data.Models;
+using VRTrackingApp.Web.Services.MSRC;
+using VRTrackingApp.Web.Services.MSRC.Models;
 using VRTrackingApp.Web.Services.Notifications;
 
 namespace VRTrackingApp.Web.Services;
@@ -43,18 +45,21 @@ public class ScanIngestionService
     private readonly ScanImportService _import;
     private readonly INotificationService _notify;
     private readonly UserNotificationService _users;
+    private readonly IVulnerabilityEnrichmentService _enrichment;
 
     /// <summary>In-process lock to serialize ingestion per scan key on a single node.</summary>
     private static readonly Dictionary<string, SemaphoreSlim> NodeLocks = new();
     private static readonly object NodeLockGate = new();
 
-    public ScanIngestionService(VRTrackingAppContext db, ScanImportService import,
-        INotificationService notify, UserNotificationService users)
+public ScanIngestionService(VRTrackingAppContext db, ScanImportService import,
+        INotificationService notify, UserNotificationService users,
+        IVulnerabilityEnrichmentService enrichment)
     {
         _db = db;
         _import = import;
         _notify = notify;
         _users = users;
+        _enrichment = enrichment;
     }
 
     // ----------------------------------------------------------------
@@ -280,7 +285,7 @@ public class ScanIngestionService
                         await _db.SaveChangesAsync(); // so host.Id is available for key
                     }
 
-                    if (!seenFindings.TryGetValue(row.PluginId, out var finding))
+if (!seenFindings.TryGetValue(row.PluginId, out var finding))
                     {
                         finding = new VulnerabilityFinding
                         {
@@ -304,6 +309,28 @@ public class ScanIngestionService
                         _db.VulnerabilityFindings.Add(finding);
                         seenFindings[row.PluginId] = finding;
                         await _db.SaveChangesAsync();
+
+                        // MSRC Enrichment for new findings with CVEs
+                        if (!string.IsNullOrWhiteSpace(finding.Cve))
+                        {
+                            _ = Task.Run(async () =>
+                            {
+                                try
+                                {
+                                    var enrichment = await _enrichment.EnrichByCVEAsync(finding.Cve!);
+                                    if (enrichment != null)
+                                    {
+                                        ApplyEnrichment(finding, enrichment);
+                                        await _db.SaveChangesAsync();
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    // Log but don't fail ingestion
+                                    System.Diagnostics.Debug.WriteLine($"MSRC enrichment failed for {finding.Cve}: {ex.Message}");
+                                }
+                            });
+                        }
                     }
 
                     var key = VulnKey(host.Id, finding.Id, row.Port, row.Protocol);
@@ -511,8 +538,28 @@ public class ScanIngestionService
             if (string.IsNullOrEmpty(existing.OperatingSystem) && !string.IsNullOrEmpty(os)) existing.OperatingSystem = os;
             if (string.IsNullOrEmpty(existing.Location) && !string.IsNullOrEmpty(location)) existing.Location = location;
         }
-        cache[key] = existing;
+cache[key] = existing;
         return existing;
+    }
+
+    private void ApplyEnrichment(VulnerabilityFinding finding, MSRCEnrichmentData enrichment)
+    {
+        finding.MicrosoftAdvisoryId = enrichment.MicrosoftAdvisoryId;
+        finding.MicrosoftBulletinId = enrichment.MicrosoftBulletinId;
+        finding.KBNumbers = enrichment.KBNumbers != null ? string.Join(",", enrichment.KBNumbers) : null;
+        finding.PatchDownloadUrls = enrichment.PatchDownloadUrls != null ? string.Join(",", enrichment.PatchDownloadUrls) : null;
+        finding.RequiresReboot = enrichment.RequiresReboot;
+        finding.SupersededBy = enrichment.SupersededBy;
+        finding.ExploitabilityAssessment = enrichment.ExploitabilityAssessment;
+        finding.MicrosoftReleaseDate = enrichment.MicrosoftReleaseDate?.DateTime;
+        finding.AffectedProducts = enrichment.AffectedProducts != null
+            ? System.Text.Json.JsonSerializer.Serialize(enrichment.AffectedProducts)
+            : null;
+        finding.Workaround = enrichment.Workaround;
+        finding.FAQUrl = enrichment.FAQUrl;
+        finding.CVRFId = enrichment.CVRFId;
+        finding.CSAFId = enrichment.CSAFId;
+        finding.LastEnrichedAt = DateTime.UtcNow;
     }
 }
 

@@ -64,6 +64,8 @@ body {
 .rail-nav .nav-link.active { background: var(--rail-active); color: #fff; }
 .nav-ico { width: 18px; text-align: center; opacity: .9; }
 .rail-foot { padding: 12px 16px; font-size: 11px; color: #6b7686; border-top: 1px solid rgba(255,255,255,.06); }
+.nav-divider { height: 1px; background: rgba(255,255,255,.08); margin: 8px 12px; }
+.nav-section-label { padding: 8px 12px 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: rgba(255,255,255,.3); }
 
 /* Main */
 .app-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -340,6 +342,37 @@ body {
 .kpi-row .kpi-ok .kpi-val { color: #15803d; }
 .kpi-row .kpi-info .kpi-val { color: #1d4ed8; }
 
+.kpi-row .kpi-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+.kpi-row .heroicon-solid {
+    font-size: 20px;
+    opacity: 0.8;
+}
+.kpi-row .heroicon-solid.me-1 {
+    margin-right: 6px;
+}
+
+.kpi-info .heroicon-solid { color: #1d4ed8; }
+.kpi-ok .heroicon-solid { color: #15803d; }
+.kpi-warn .heroicon-solid { color: #a16207; }
+.kpi-danger .heroicon-solid { color: #dc2626; }
+
+.btn .heroicon-solid {
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-head h1 .heroicon-solid {
+    font-size: 22px;
+    vertical-align: -2px;
+}
+
 /* Dashboard charts */
 .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; align-items: start; }
 .hbar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
@@ -437,9 +470,41 @@ body {
 .ev-type { height: auto; }
 .ev-btn { white-space: nowrap; align-self: stretch; }
 
-/* Management forms (mitigation / vendor) — consistent aligned rows */
+/* Management forms (mitigation / vendor / ticketing) — consistent aligned rows */
 .mgmt-form { display: grid; gap: 10px; align-items: end; margin-top: 12px; }
 .mgmt-form .btn { white-space: nowrap; }
+
+/* Vendor response row layout */
+.vendor-response-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+.vendor-response-row .flex-grow-1 { min-width: 0; }
+.vendor-response-row .f-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
+.vendor-response-row .f-val { font-size: 13px; margin-top: 2px; word-break: break-word; }
+
+/* Management table */
+.mgmt-table thead th {
+    font-weight: 600;
+    color: var(--muted);
+    border-bottom: 2px solid var(--border);
+}
+.mgmt-table tbody td {
+    vertical-align: middle;
+}
+.mgmt-table .collapse td {
+    padding: 0;
+    border: none;
+}
+.mgmt-table .collapse td form {
+    margin: 0;
+}
 
 @media (max-width: 1100px) {
     .kpi-row { grid-template-columns: repeat(3, 1fr); }

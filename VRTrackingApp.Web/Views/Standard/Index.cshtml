@@ -1,0 +1,86 @@
+@model IEnumerable<VRTrackingApp.Data.Models.Standard>
+@using VRTrackingApp.Data.Models
+@{
+    ViewData["Title"] = "Standards";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Standards</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="Dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="Standard">Standards</a></li>
+        <li class="breadcrumb-item active">List</li>
+    </ol>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <a asp-action="Create" class="btn btn-primary btn-sm">Create New Standard</a>
+        </div>
+        <div class="col-md-8 text-end">
+            <form asp-action="Index" method="get" class="row g-2">
+                <div class="col-md-3">
+                    <input type="text" name="title" class="form-control form-control-sm" placeholder="Standard title" value="@ViewBag.Title" />
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="status" class="form-control form-control-sm" placeholder="Status" value="@ViewBag.Status" />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+                </div>
+                <div class="col-md-2">
+                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-book"></i> Standard List
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Policy</th>
+                            <th>Version</th>
+                            <th>Effective Date</th>
+                            <th>Review Date</th>
+                            <th>Owner</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var standard in Model)
+                        {
+                            <tr>
+                                <td>@standard.Title</td>
+                                <td class="small" style="max-width:200px;">@standard.Description</td>
+                                <td>@standard.Policy.Title</td>
+                                <td>@standard.Version</td>
+                                <td>@standard.EffectiveDate.ToString("yyyy-MM-dd")</td>
+                                <td>@standard.ReviewDate.ToString("yyyy-MM-dd")</td>
+                                <td>@(standard.Owner?.UserName ?? "Unassigned")</td>
+                                <td>
+                                    <span class="badge bg-@(standard.Status == "Draft" ? "secondary" : standard.Status == "Under Review" ? "warning" : standard.Status == "Approved" ? "success" : "danger")">
+                                        @standard.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@standard.Id" class="btn btn-sm btn-outline-primary">Details</a>
+                                    <a asp-action="Edit" asp-route-id="@standard.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                    <a asp-action="Delete" asp-route-id="@standard.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

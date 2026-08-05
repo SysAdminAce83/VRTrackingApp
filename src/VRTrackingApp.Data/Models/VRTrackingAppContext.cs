@@ -27,6 +27,7 @@ public class VRTrackingAppContext : DbContext
     public DbSet<Asset> Assets { get; set; }
     public DbSet<AssetAuditTrail> AssetAuditTrails { get; set; }
     public DbSet<AssetFieldChange> AssetFieldChanges { get; set; }
+public DbSet<AppSetting> AppSettings { get; set; }
 
     // Exception module V2
     public DbSet<ExceptionMitigation> ExceptionMitigations { get; set; }
@@ -38,6 +39,21 @@ public class VRTrackingAppContext : DbContext
     public DbSet<VendorResponse> VendorResponses { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<TicketingLink> TicketingLinks { get; set; }
+
+    // Compliance / GRC
+    public DbSet<Framework> Frameworks { get; set; }
+    public DbSet<ControlFamily> ControlFamilies { get; set; }
+    public DbSet<ComplianceControl> ComplianceControls { get; set; }
+    public DbSet<FindingComplianceLink> FindingComplianceLinks { get; set; }
+    public DbSet<ComplianceReview> ComplianceReviews { get; set; }
+    public DbSet<RiskAcceptance> RiskAcceptances { get; set; }
+    public DbSet<Policy> Policies { get; set; }
+    public DbSet<Standard> Standards { get; set; }
+    public DbSet<Procedure> Procedures { get; set; }
+    public DbSet<Risk> Risks { get; set; }
+    public DbSet<ControlEvidence> ControlEvidences { get; set; }
+    public DbSet<EvidenceAttachment> EvidenceAttachments { get; set; }
+    public DbSet<ControlLibrary> ControlLibraries { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -401,7 +417,7 @@ public class VRTrackingAppContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
-        modelBuilder.Entity<AssetFieldChange>(e =>
+modelBuilder.Entity<AssetFieldChange>(e =>
         {
             e.HasIndex(c => c.AssetAuditTrailId);
             e.Property(c => c.Field).HasMaxLength(100).IsRequired();
@@ -412,7 +428,229 @@ public class VRTrackingAppContext : DbContext
                 .HasForeignKey(c => c.AssetAuditTrailId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        // ---- Compliance / GRC ----
+
+        modelBuilder.Entity<Framework>(e =>
+        {
+            e.HasIndex(f => f.ShortName).IsUnique();
+            e.Property(f => f.Name).HasMaxLength(255).IsRequired();
+            e.Property(f => f.ShortName).HasMaxLength(50).IsRequired();
+            e.Property(f => f.Version).HasMaxLength(20);
+            e.Property(f => f.Description).HasMaxLength(2000);
+        });
+
+        modelBuilder.Entity<ControlFamily>(e =>
+        {
+            e.HasIndex(cf => cf.FamilyId);
+            e.HasIndex(cf => cf.FrameworkId);
+            e.Property(cf => cf.FamilyId).HasMaxLength(50).IsRequired();
+            e.Property(cf => cf.Name).HasMaxLength(255).IsRequired();
+            e.Property(cf => cf.Description).HasMaxLength(4000);
+            e.HasOne(cf => cf.Framework)
+                .WithMany(f => f.ControlFamilies)
+                .HasForeignKey(cf => cf.FrameworkId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ComplianceControl>(e =>
+        {
+            e.HasIndex(cc => cc.ControlId);
+            e.HasIndex(cc => cc.Framework);
+            e.HasIndex(cc => cc.Framework);
+            e.Property(cc => cc.ControlId).HasMaxLength(50).IsRequired();
+            e.Property(cc => cc.Name).HasMaxLength(255).IsRequired();
+            e.Property(cc => cc.Framework).HasMaxLength(100).IsRequired();
+            e.Property(cc => cc.FrameworkVersion).HasMaxLength(20);
+            e.Property(cc => cc.Description).HasMaxLength(4000);
+            e.HasOne(cc => cc.ControlFamilyNavigation)
+                .WithMany()
+                .HasForeignKey(cc => cc.ControlFamilyId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<FindingComplianceLink>(e =>
+        {
+            e.HasIndex(fcl => fcl.VulnerabilityFindingId);
+            e.HasIndex(fcl => fcl.ComplianceControlId);
+            e.HasIndex(fcl => new { fcl.VulnerabilityFindingId, fcl.ComplianceControlId }).IsUnique();
+            e.Property(fcl => fcl.Status).HasConversion<string>().HasMaxLength(20);
+            e.Property(fcl => fcl.Rationale).HasMaxLength(4000);
+            e.Property(fcl => fcl.EvidenceRef).HasMaxLength(500);
+            e.HasOne(fcl => fcl.Finding)
+                .WithMany()
+                .HasForeignKey(fcl => fcl.VulnerabilityFindingId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(fcl => fcl.Control)
+                .WithMany(c => c.FindingLinks)
+                .HasForeignKey(fcl => fcl.ComplianceControlId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ComplianceReview>(e =>
+        {
+            e.HasIndex(cr => cr.VulnerabilityFindingId);
+            e.HasIndex(cr => cr.ComplianceControlId);
+            e.Property(cr => cr.Status).HasConversion<string>().HasMaxLength(20);
+            e.Property(cr => cr.Rationale).HasMaxLength(4000);
+            e.Property(cr => cr.EvidenceRef).HasMaxLength(500);
+            e.Property(cr => cr.ReviewerNotes).HasMaxLength(4000);
+            e.Property(cr => cr.ReviewedBy).HasMaxLength(255);
+            e.HasOne(cr => cr.Finding)
+                .WithMany()
+                .HasForeignKey(cr => cr.VulnerabilityFindingId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(cr => cr.Control)
+                .WithMany()
+                .HasForeignKey(cr => cr.ComplianceControlId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RiskAcceptance>(e =>
+        {
+            e.HasIndex(ra => ra.VulnerabilityFindingId);
+            e.HasIndex(ra => ra.ComplianceControlId);
+            e.Property(ra => ra.Justification).HasMaxLength(4000).IsRequired();
+            e.Property(ra => ra.AcceptedBy).HasMaxLength(255).IsRequired();
+            e.Property(ra => ra.Status).HasConversion<string>().HasMaxLength(20);
+            e.Property(ra => ra.ApprovalNotes).HasMaxLength(4000);
+            e.HasOne(ra => ra.Finding)
+                .WithMany()
+                .HasForeignKey(ra => ra.VulnerabilityFindingId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(ra => ra.Control)
+                .WithMany()
+                .HasForeignKey(ra => ra.ComplianceControlId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<Risk>(e =>
+        {
+            e.HasIndex(r => r.RiskName).IsUnique();
+            e.Property(r => r.RiskName).HasMaxLength(200).IsRequired();
+            e.Property(r => r.Description).IsRequired();
+            e.Property(r => r.BusinessImpact).HasMaxLength(50).IsRequired();
+            e.Property(r => r.Likelihood).HasMaxLength(50).IsRequired();
+            e.Property(r => r.RiskScore).IsRequired();
+            e.HasOne(r => r.Owner)
+                .WithMany()
+                .HasForeignKey(r => r.OwnerUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.Property(r => r.ReviewDate);
+            e.Property(r => r.Status).HasMaxLength(50).IsRequired();
+            e.Property(r => r.Notes).HasMaxLength(4000);
+            e.Property(r => r.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(r => r.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+        });
+
+        modelBuilder.Entity<ControlEvidence>(e =>
+        {
+            e.HasIndex(ce => ce.ComplianceControlId);
+            e.HasIndex(ce => ce.FindingComplianceLinkId);
+            e.Property(ce => ce.Description).HasMaxLength(4000).IsRequired();
+            e.Property(ce => ce.FilePath).HasMaxLength(500);
+            e.Property(ce => ce.FileName).HasMaxLength(255);
+            e.Property(ce => ce.FileHash).HasMaxLength(128);
+            e.HasOne(ce => ce.Control)
+                .WithMany(c => c.Evidence)
+                .HasForeignKey(ce => ce.ComplianceControlId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(ce => ce.FindingLink)
+                .WithMany()
+                .HasForeignKey(ce => ce.FindingComplianceLinkId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<EvidenceAttachment>(e =>
+        {
+            e.HasIndex(ea => ea.ControlEvidenceId);
+            e.Property(ea => ea.OriginalFileName).HasMaxLength(255).IsRequired();
+            e.Property(ea => ea.StoredFileName).HasMaxLength(255).IsRequired();
+            e.Property(ea => ea.ContentType).HasMaxLength(100).IsRequired();
+            e.Property(ea => ea.FileHash).HasMaxLength(128).IsRequired();
+            e.Property(ea => ea.UploadedBy).HasMaxLength(255).IsRequired();
+            e.HasOne(ea => ea.Evidence)
+                .WithMany()
+                .HasForeignKey(ea => ea.ControlEvidenceId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Policy>(e => {
+            e.ToTable("Policies");
+            e.HasIndex(p => p.Title).IsUnique(false);
+            e.Property(p => p.Title).HasMaxLength(200).IsRequired();
+            e.Property(p => p.Description).IsRequired();
+            e.Property(p => p.Category).HasMaxLength(100).IsRequired();
+            e.Property(p => p.Version).IsRequired();
+            e.Property(p => p.EffectiveDate).IsRequired();
+            e.Property(p => p.ReviewDate).IsRequired();
+            e.HasOne(p => p.Owner)
+                .WithMany()
+                .HasForeignKey(p => p.OwnerUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.Property(p => p.Status).HasMaxLength(50).IsRequired();
+            e.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(p => p.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+        });
+
+        modelBuilder.Entity<Standard>(e => {
+            e.ToTable("Standards");
+            e.HasIndex(s => s.Title).IsUnique(false);
+            e.Property(s => s.Title).HasMaxLength(200).IsRequired();
+            e.Property(s => s.Description).IsRequired();
+            e.Property(s => s.Version).IsRequired();
+            e.Property(s => s.EffectiveDate).IsRequired();
+            e.Property(s => s.ReviewDate).IsRequired();
+            e.HasOne(s => s.Owner)
+                .WithMany()
+                .HasForeignKey(s => s.OwnerUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(s => s.Policy)
+                .WithMany()
+                .HasForeignKey(s => s.PolicyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.Property(s => s.Status).HasMaxLength(50).IsRequired();
+            e.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(s => s.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+        });
+
+        modelBuilder.Entity<Procedure>(e => {
+            e.ToTable("Procedures");
+            e.HasIndex(p => p.Title).IsUnique(false);
+            e.Property(p => p.Title).HasMaxLength(200).IsRequired();
+            e.Property(p => p.Description).IsRequired();
+            e.Property(p => p.Version).IsRequired();
+            e.Property(p => p.EffectiveDate).IsRequired();
+            e.Property(p => p.ReviewDate).IsRequired();
+            e.HasOne(p => p.Owner)
+                .WithMany()
+                .HasForeignKey(p => p.OwnerUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(p => p.Standard)
+                .WithMany()
+                .HasForeignKey(p => p.StandardId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.Property(p => p.Status).HasMaxLength(50).IsRequired();
+            e.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(p => p.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+        });
+
+        modelBuilder.Entity<ControlLibrary>(e => {
+            e.ToTable("ControlLibraries");
+            e.HasIndex(c => c.ControlId).IsUnique();
+            e.Property(c => c.ControlId).HasMaxLength(50).IsRequired();
+            e.Property(c => c.Domain).HasMaxLength(100).IsRequired();
+            e.Property(c => c.ControlName).HasMaxLength(200).IsRequired();
+            e.Property(c => c.ControlDescription).IsRequired();
+            e.Property(c => c.ControlOwner).HasMaxLength(100);
+            e.Property(c => c.Frequency).HasMaxLength(50);
+            e.Property(c => c.Evidence).HasMaxLength(500);
+            e.Property(c => c.TestSteps).HasMaxLength(1000);
+            e.Property(c => c.RiskAddressed).HasMaxLength(200);
+            e.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(c => c.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+        });
     }
 }
+
 
 

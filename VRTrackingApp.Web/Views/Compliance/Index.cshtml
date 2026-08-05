@@ -1,0 +1,82 @@
+@model VRTrackingApp.Web.Controllers.ComplianceIndexViewModel
+@using VRTrackingApp.Data.Models
+@{
+    ViewData["Title"] = "Compliance Control Library";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Compliance Control Library</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="Dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item active">Compliance</li>
+    </ol>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <form asp-action="Index" method="get">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control" placeholder="Search controls..." value="@Model.SearchTerm" />
+                    <button class="btn btn-primary" type="submit">Search</button>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-3">
+            <select name="framework" class="form-select" onchange="this.form.submit()">
+                <option value="">All Frameworks</option>
+                @foreach (var fw in Model.Frameworks)
+                {
+                    <option value="@fw.ShortName" selected="@(Model.SelectedFramework == fw.ShortName)">@fw.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-shield-halved"></i> Controls (@Model.Controls.Count())
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Control ID</th>
+                            <th>Name</th>
+                            <th>Framework</th>
+                            <th>Family</th>
+                            <th>Impact</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var control in Model.Controls)
+                        {
+                            <tr>
+                                <td><a asp-action="Details" asp-route-id="@control.Id">@control.ControlId</a></td>
+                                <td>@control.Name</td>
+                                <td>@control.Framework</td>
+                                <td>@control.ControlFamilyNavigation?.Name</td>
+                                <td>
+                                    <span class="badge bg-@(control.Impact == VRTrackingApp.Data.Models.ComplianceImpact.Critical ? "danger" : control.Impact == ComplianceImpact.High ? "warning" : control.Impact == ComplianceImpact.Medium ? "info" : "secondary")">
+                                        @control.Impact
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (control.FindingLinks.Any())
+                                    {
+                                        <span class="badge bg-success">Mapped</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Unmapped</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

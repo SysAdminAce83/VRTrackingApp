@@ -46,6 +46,12 @@ public record RemediationPlan(RemediationKind Kind, string? PatchId, string Reas
 {
     /// <summary>Set when Kind == RegistryConfig.</summary>
     public RegistryPlaybook? Registry { get; init; }
+
+    /// <summary>Direct download URL for the patch (from MSRC enrichment).</summary>
+    public string? PatchDownloadUrl { get; init; }
+
+    /// <summary>All KB numbers from MSRC enrichment (when multiple apply).</summary>
+    public string[]? AllKbNumbers { get; init; }
 }
 
 /// <summary>Everything a provider needs to act on one host.</summary>
@@ -61,6 +67,12 @@ public record RemediationContext(
 
     /// <summary>Registry recipe to check/set (when the finding is a configuration fix).</summary>
     public RegistryPlaybook? Registry { get; init; }
+
+    /// <summary>Direct download URL for the patch (from MSRC enrichment).</summary>
+    public string? PatchDownloadUrl { get; init; }
+
+    /// <summary>All KB numbers from MSRC enrichment (when multiple apply).</summary>
+    public string[]? AllKbNumbers { get; init; }
 }
 
 /// <summary>Result of a provider check/install step.</summary>

@@ -1,0 +1,162 @@
+@model VRTrackingApp.Web.Controllers.ComplianceReportViewModel
+@using VRTrackingApp.Data.Models
+@{
+    ViewData["Title"] = "Compliance Report";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Compliance Report</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="Dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item active">Compliance Report</li>
+    </ol>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <form asp-action="Report" method="get">
+                <div class="input-group">
+                    <select name="framework" class="form-select">
+                        <option value="">All Frameworks</option>
+                        @foreach (var fw in Model.Frameworks)
+                        {
+                            <option value="@fw.ShortName" selected="@(Model.SelectedFramework == fw.ShortName)">@fw.Name</option>
+                        }
+                    </select>
+                    <button class="btn btn-primary" type="submit">Generate Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.Summary.TotalControls > 0)
+    {
+        <div class="row mb-4">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Controls</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Summary.TotalControls</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Compliant</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Summary.Compliant</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-danger shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Non-Compliant</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Summary.NonCompliant</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Coverage</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Summary.CoveragePercent%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header"><i class="fas fa-table"></i> Control Coverage</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr><th>Control</th><th>Framework</th><th>Family</th><th>Findings</th><th>Compliant</th><th>Non-Compliant</th><th>Coverage</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.ControlCoverage)
+                        {
+                            <tr>
+                                <td>@item.ControlId - @item.ControlName</td>
+                                <td>@item.Framework</td>
+                                <td>@item.ControlFamilyName</td>
+                                <td>@item.TotalFindings</td>
+                                <td class="text-success">@item.Compliant</td>
+                                <td class="text-danger">@item.NonCompliant</td>
+                                <td>@item.CoveragePercent%</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><i class="fas fa-exclamation-triangle"></i> Failed Controls</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr><th>Control</th><th>CVE</th><th>Severity</th><th>Status</th><th>Rationale</th><th>Reviewed By</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.FailedControls)
+                        {
+                            <tr>
+                                <td>@item.ControlId</td>
+                                <td>@item.Cve</td>
+                                <td>@item.Severity</td>
+                                <td><span class="badge bg-danger">@item.Status</span></td>
+                                <td>@item.Rationale</td>
+                                <td>@item.ReviewedBy</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><i class="fas fa-file-alt"></i> Evidence Gaps</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr><th>Control</th><th>CVE</th><th>Severity</th><th>Gap</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.EvidenceGaps)
+                        {
+                            <tr>
+                                <td>@item.ControlId</td>
+                                <td>@item.Cve</td>
+                                <td>@item.Severity</td>
+                                <td>Compliant but missing evidence reference</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,101 @@
+@model VRTrackingApp.Web.Controllers.ComplianceControlDetailViewModel
+@using VRTrackingApp.Data.Models
+@{
+    ViewData["Title"] = Model.Control.Name;
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">@Model.Control.ControlId: @Model.Control.Name</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="Compliance">Compliance</a></li>
+        <li class="breadcrumb-item active">@Model.Control.ControlId</li>
+    </ol>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Control Details</div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Control ID</dt>
+                        <dd class="col-sm-8">@Model.Control.ControlId</dd>
+                        <dt class="col-sm-4">Framework</dt>
+                        <dd class="col-sm-8">@Model.Control.Framework @Model.Control.FrameworkVersion</dd>
+                        <dt class="col-sm-4">Family</dt>
+                        <dd class="col-sm-8">@Model.Control.ControlFamilyNavigation?.Name</dd>
+                        <dt class="col-sm-4">Impact</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-@(Model.Control.Impact == ComplianceImpact.Critical ? "danger" : Model.Control.Impact == ComplianceImpact.High ? "warning" : Model.Control.Impact == ComplianceImpact.Medium ? "info" : "secondary")">
+                                @Model.Control.Impact
+                            </span>
+                        </dd>
+                        <dt class="col-sm-4">Status</dt>
+                        <dd class="col-sm-8">@(Model.Control.IsActive ? "Active" : "Inactive")</dd>
+                    </dl>
+                    <p>@Model.Control.Description</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Coverage Summary</div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-6">Total Mappings</dt>
+                        <dd class="col-sm-6">@Model.Summary.TotalControls</dd>
+                        <dt class="col-sm-6">Compliant</dt>
+                        <dd class="col-sm-6 text-success">@Model.Summary.Compliant</dd>
+                        <dt class="col-sm-6">Non-Compliant</dt>
+                        <dd class="col-sm-6 text-danger">@Model.Summary.NonCompliant</dd>
+                        <dt class="col-sm-6">In Progress</dt>
+                        <dd class="col-sm-6 text-warning">@Model.Summary.InProgress</dd>
+                        <dt class="col-sm-6">Not Applicable</dt>
+                        <dd class="col-sm-6">@Model.Summary.NotApplicable</dd>
+                        <dt class="col-sm-6">Under Review</dt>
+                        <dd class="col-sm-6">@Model.Summary.UnderReview</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Mapped Findings</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Finding</th>
+                            <th>CVE</th>
+                            <th>Status</th>
+                            <th>Rationale</th>
+                            <th>Evidence Ref</th>
+                            <th>Reviewed By</th>
+                            <th>Reviewed At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var link in Model.Links)
+                        {
+                            <tr>
+                                <td><a asp-controller="Vulnerabilities" asp-action="Details" asp-route-id="@link.VulnerabilityFindingId">@link.Finding.PluginName</a></td>
+                                <td>@link.Finding.Cve</td>
+                                <td>
+                                    <span class="badge bg-@(link.Status == ComplianceStatus.Compliant ? "success" : link.Status == ComplianceStatus.NonCompliant ? "danger" : link.Status == ComplianceStatus.InProgress ? "warning" : link.Status == ComplianceStatus.NotApplicable ? "secondary" : "info")">
+                                        @link.Status
+                                    </span>
+                                </td>
+                                <td>@link.Rationale</td>
+                                <td>@link.EvidenceRef</td>
+                                <td>@link.ReviewedBy</td>
+                                <td>@link.ReviewedAt?.ToString("g")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,85 @@
+@model VRTrackingApp.Data.Models.ControlLibrary
+@using VRTrackingApp.Data.Models
+@{
+    ViewData["Title"] = "Control Library Details: " + Model.ControlId;
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Control Library Details</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="Dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="ControlLibrary">Control Library</a></li>
+        <li class="breadcrumb-item active">Details</li>
+    </ol>
+
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <a asp-action="Index" class="btn btn-outline-secondary">← Back to List</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-secondary me-2">Edit</a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Control Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Control ID</dt>
+                        <dd class="col-sm-9">@Model.ControlId</dd>
+                        <dt class="col-sm-3">Domain</dt>
+                        <dd class="col-sm-9">@Model.Domain</dd>
+                        <dt class="col-sm-3">Control Name</dt>
+                        <dd class="col-sm-9">@Model.ControlName</dd>
+                        <dt class="col-sm-3">Description</dt>
+                        <dd class="col-sm-9">@Model.ControlDescription</dd>
+                        <dt class="col-sm-3">Objective</dt>
+                        <dd class="col-sm-9">@Model.Objective</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Additional Details</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Owner</dt>
+                        <dd class="col-sm-9">@(Model.ControlOwner ?? "Unassigned")</dd>
+                        <dt class="col-sm-3">Frequency</dt>
+                        <dd class="col-sm-9">@(Model.Frequency ?? "Not set")</dd>
+                        <dt class="col-sm-3">Evidence</dt>
+                        <dd class="col-sm-9">@(Model.Evidence ?? "Not specified")</dd>
+                        <dt class="col-sm-3">Test Steps</dt>
+                        <dd class="col-sm-9">@(Model.TestSteps ?? "Not specified")</dd>
+                        <dt class="col-sm-3">Risk Addressed</dt>
+                        <dd class="col-sm-9">@(Model.RiskAddressed ?? "Not specified")</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Audit Trail</h5>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Created By</dt>
+                <dd class="col-sm-9">@(Model.CreatedBy?.UserName ?? "System")</dd>
+                <dt class="col-sm-3">Created At</dt>
+                <dd class="col-sm-9">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+                <dt class="col-sm-3">Updated By</dt>
+                <dd class="col-sm-9">@(Model.UpdatedBy?.UserName ?? "None")</dd>
+                <dt class="col-sm-3">Updated At</dt>
+                <dd class="col-sm-9">@(Model.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "N/A")</dd>
+            </dl>
+        </div>
+    </div>
+</div>

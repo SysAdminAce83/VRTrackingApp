@@ -1,0 +1,74 @@
+@model VRTrackingApp.Web.Controllers.ComplianceMapViewModel
+@{
+    ViewData["Title"] = "Map Compliance Controls";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Map Compliance Controls</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="Dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-action="Details" asp-controller="Vulnerabilities" asp-route-id="@Model.FindingId">Finding</a></li>
+        <li class="breadcrumb-item active">Map Controls</li>
+    </ol>
+
+    <div class="alert alert-info">
+        <strong>Finding:</strong> @Model.PluginName
+        @if (!string.IsNullOrEmpty(Model.Cve))
+        {
+            <span>&nbsp;|&nbsp; <strong>CVE:</strong> @Model.Cve</span>
+        }
+        &nbsp;|&nbsp; <strong>Severity:</strong> @Model.Severity
+    </div>
+
+    <form asp-action="Map" method="post">
+        <input type="hidden" name="findingId" value="@Model.FindingId" />
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5>Available Controls</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @foreach (var control in Model.AllControls)
+                    {
+                        <div class="col-md-6 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       name="controlIds"
+                                       value="@control.Id"
+                                       id="control_@control.Id"
+                                       disabled="@Model.ExistingControlIds.Contains(control.Id)" />
+                                <label class="form-check-label" for="control_@control.Id">
+                                    <strong>@control.ControlId</strong> - @control.Name
+                                    <br />
+                                    <small class="text-muted">@control.Framework &gt; @control.ControlFamilyNavigation?.Name</small>
+                                    @if (Model.ExistingControlIds.Contains(control.Id))
+                                    {
+                                        <span class="badge bg-success ms-2">Already Mapped</span>
+                                    }
+                                </label>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5>Mapping Rationale</h5>
+            </div>
+            <div class="card-body">
+                <textarea name="rationale" class="form-control" rows="3" placeholder="Optional rationale for this mapping..."></textarea>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-link"></i> Map Selected Controls
+        </button>
+        <a asp-action="Details" asp-controller="Vulnerabilities" asp-route-id="@Model.FindingId" class="btn btn-secondary">
+            Cancel
+        </a>
+    </form>
+</div>

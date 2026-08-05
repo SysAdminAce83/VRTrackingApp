@@ -20,7 +20,7 @@ namespace VRTrackingApp.Infrastructure.Repositories
         Task<int> CountAsync(ISpecification<T> spec);
     }
 
-    public abstract class BaseRepository<T> : IBaseRepository<T> where T : class
+    public class BaseRepository<T> : IBaseRepository<T> where T : class
     {
         protected readonly ApplicationDbContext _dbContext;
 

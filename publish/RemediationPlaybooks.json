@@ -1,0 +1,43 @@
+{
+  "_comment": "Registry-based remediation playbooks. IMPORTANT: values marked \"verified\": false must be confirmed by your security team against Microsoft guidance for YOUR OS build before enabling registry 'set' in Live mode. Add more playbooks by copying an entry and setting pluginIds/keywords/settings.",
+  "registryPlaybooks": [
+    {
+      "pluginIds": [ 302873 ],
+      "keywords": [ "speculative execution", "branch history injection", "intel bhi", "cve-2022-0001" ],
+      "name": "Intel BHI / Speculative Execution mitigation (CVE-2022-0001)",
+      "requiresReboot": true,
+      "requiresMicrocode": true,
+      "verified": false,
+      "settings": [
+        {
+          "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+          "name": "FeatureSettingsOverride",
+          "type": "DWord",
+          "expected": 8388608
+        },
+        {
+          "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+          "name": "FeatureSettingsOverrideMask",
+          "type": "DWord",
+          "expected": 3
+        }
+      ]
+    },
+    {
+      "pluginIds": [],
+      "keywords": [ "smbv1", "smb1", "smb 1.0" ],
+      "name": "Disable SMBv1",
+      "requiresReboot": true,
+      "requiresMicrocode": false,
+      "verified": false,
+      "settings": [
+        {
+          "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Services\\LanmanServer\\Parameters",
+          "name": "SMB1",
+          "type": "DWord",
+          "expected": 0
+        }
+      ]
+    }
+  ]
+}

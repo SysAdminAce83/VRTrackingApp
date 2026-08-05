@@ -25,6 +25,10 @@ public partial class PatchIdentifierParser
                  ?? instance.AssetHost?.Asset?.OperatingSystem
                  ?? "";
 
+        // Use MSRC-enriched KB numbers if available (highest priority)
+        var msrcKbs = finding?.KBNumbersArray ?? [];
+        var msrcUrls = finding?.PatchDownloadUrlsArray ?? [];
+
         // All the free text where a KB / registry hint might appear.
         var haystack = string.Join("\n", new[]
         {
@@ -40,6 +44,19 @@ public partial class PatchIdentifierParser
         var isLinux = new[] { "linux", "red hat", "redhat", "rhel", "ubuntu", "centos", "debian", "oracle linux", "suse" }
             .Any(k => os.Contains(k, StringComparison.OrdinalIgnoreCase));
 
+        // 0) MSRC-enriched KB numbers (highest priority)
+        if (msrcKbs.Length > 0)
+        {
+            var primaryKb = msrcKbs[0].ToUpperInvariant();
+            var primaryUrl = msrcUrls.Length > 0 ? msrcUrls[0] : null;
+            return new RemediationPlan(RemediationKind.WindowsKb, primaryKb,
+                $"MSRC-enriched: {string.Join(", ", msrcKbs)}") 
+            { 
+                PatchDownloadUrl = primaryUrl,
+                AllKbNumbers = msrcKbs 
+            };
+        }
+
         // 1) Most specific: a curated registry playbook matched by plugin id / keyword.
         var curated = _registry.ResolveCurated(finding?.PluginId ?? 0, haystack);
         if (curated is not null)
@@ -50,7 +67,7 @@ public partial class PatchIdentifierParser
         var kb = KbRegex().Match(haystack);
         if (kb.Success)
             return new RemediationPlan(RemediationKind.WindowsKb, kb.Value.ToUpperInvariant(),
-                $"Found {kb.Value.ToUpperInvariant()} referenced in the finding.");
+                $"Found {kb.Value.ToUpperInvariant()} referenced in the finding text.");
 
         // 3) Registry expectations parsed generically from the plugin output.
         var parsed = _registry.ParseFromOutput(instance.PluginOutput);

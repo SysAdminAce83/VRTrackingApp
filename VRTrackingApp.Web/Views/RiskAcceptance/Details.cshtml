@@ -1,0 +1,60 @@
+@model VRTrackingApp.Data.Models.RiskAcceptance
+@using VRTrackingApp.Data.Models
+@{
+    ViewData["Title"] = "Risk Acceptance #" + Model.Id;
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Risk Acceptance #@Model.Id</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="RiskAcceptance">Risk Acceptances</a></li>
+        <li class="breadcrumb-item active">#@Model.Id</li>
+    </ol>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header">Risk Acceptance Details</div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">CVE</dt>
+                        <dd class="col-sm-8">@Model.Finding.Cve</dd>
+                        <dt class="col-sm-4">Finding</dt>
+                        <dd class="col-sm-8">@Model.Finding.PluginName</dd>
+                        <dt class="col-sm-4">Control</dt>
+                        <dd class="col-sm-8">@Model.Control.ControlId — @Model.Control.Name</dd>
+                        <dt class="col-sm-4">Framework</dt>
+                        <dd class="col-sm-8">@Model.Control.Framework</dd>
+                        <dt class="col-sm-4">Accepted By</dt>
+                        <dd class="col-sm-8">@Model.AcceptedBy</dd>
+                        <dt class="col-sm-4">Accepted At</dt>
+                        <dd class="col-sm-8">@Model.AcceptedAt.ToString("yyyy-MM-dd HH:mm UTC")</dd>
+                        <dt class="col-sm-4">Expiry</dt>
+                        <dd class="col-sm-8">@(Model.ExpiryDate?.ToString("yyyy-MM-dd") ?? "No expiry")</dd>
+                        <dt class="col-sm-4">Status</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-@(Model.Status == RiskAcceptanceStatus.Active ? "success" : Model.Status == RiskAcceptanceStatus.Expired ? "warning" : "danger")">
+                                @Model.Status
+                            </span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header">Justification</div>
+                <div class="card-body">
+                    <p>@Model.Justification</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">Approval Notes</div>
+                <div class="card-body">
+                    <p>@(Model.ApprovalNotes ?? "No notes")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

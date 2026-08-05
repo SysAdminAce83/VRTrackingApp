@@ -1,0 +1,112 @@
+@model VRTrackingApp.Data.Models.ControlLibrary
+@using VRTrackingApp.Data.Models
+@{
+    ViewData["Title"] = "Create Control";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Create Control</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="Dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="ControlLibrary">Control Library</a></li>
+        <li class="breadcrumb-item active">Create</li>
+    </ol>
+
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <a asp-action="Index" class="btn btn-outline-secondary">← Back to List</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-plus"></i> New Control
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="ControlId" class="form-label">Control ID *</label>
+                            <input asp-for="ControlId" class="form-control" />
+                            <span asp-validation-for="ControlId" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="Domain" class="form-label">Domain *</label>
+                            <input asp-for="Domain" class="form-control" />
+                            <span asp-validation-for="Domain" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="ControlName" class="form-label">Control Name *</label>
+                            <input asp-for="ControlName" class="form-control" />
+                            <span asp-validation-for="ControlName" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="ControlDescription" class="form-label">Description *</label>
+                            <textarea asp-for="ControlDescription" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="ControlDescription" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="Objective" class="form-label">Objective</label>
+                            <input asp-for="Objective" class="form-control" />
+                            <span asp-validation-for="Objective" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="ControlOwner" class="form-label">Owner</label>
+                            <input asp-for="ControlOwner" class="form-control" />
+                            <span asp-validation-for="ControlOwner" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="Frequency" class="form-label">Frequency</label>
+                            <input asp-for="Frequency" class="form-control" />
+                            <span asp-validation-for="Frequency" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="Evidence" class="form-label">Evidence</label>
+                            <textarea asp-for="Evidence" class="form-control" rows="2"></textarea>
+                            <span asp-validation-for="Evidence" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="TestSteps" class="form-label">Test Steps</label>
+                            <textarea asp-for="TestSteps" class="form-control" rows="2"></textarea>
+                            <span asp-validation-for="TestSteps" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="RiskAddressed" class="form-label">Risk Addressed</label>
+                            <input asp-for="RiskAddressed" class="form-control" />
+                            <span asp-validation-for="RiskAddressed" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary me-2">Create</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

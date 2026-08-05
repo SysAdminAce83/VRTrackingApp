@@ -102,7 +102,9 @@ public class RemediationEngine
             var ctx = new RemediationContext(host, inst.AssetHost?.IpAddress, os, plan.PatchId, job.IsCriticalAsset)
             {
                 SourceKey = inst.VulnerabilityFinding?.PluginId.ToString(),
-                Registry = plan.Registry
+                Registry = plan.Registry,
+                PatchDownloadUrl = plan.PatchDownloadUrl,
+                AllKbNumbers = plan.AllKbNumbers
             };
             AppendLog(job, $"Provider: {provider.Name} | Mode: {_options.Mode} | Plan: {plan.Kind}");
 

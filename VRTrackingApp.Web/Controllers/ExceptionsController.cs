@@ -446,6 +446,31 @@ public class ExceptionsController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,Analyst,Remediation Owner,SecurityChampion,InfrastructureManager,NetworkManager,RiskCommittee,CISO")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> FetchVendorResponseFromMSRC(int id)
+    {
+        var ex = await _db.ExceptionRecords
+            .Include(e => e.VulnerabilityInstance).ThenInclude(i => i.VulnerabilityFinding)
+            .Include(e => e.VendorResponses)
+            .FirstOrDefaultAsync(e => e.Id == id);
+        if (ex == null) return NotFound();
+
+        var vendorResponse = await _wf.PopulateVendorResponseFromMSRCAsync(ex);
+        if (vendorResponse != null)
+        {
+            await _db.SaveChangesAsync();
+            TempData["Success"] = "Vendor response populated from MSRC data.";
+        }
+        else
+        {
+            TempData["Error"] = "No MSRC data found for this vulnerability's CVE.";
+        }
+
+        return RedirectToAction("Details", new { id });
+    }
+
+    [HttpPost]
     [Authorize(Roles = "Admin,Analyst,Remediation Owner,SecurityChampion")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteVendorResponse(int id, int vendorResponseId)

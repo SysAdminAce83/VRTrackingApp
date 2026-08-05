@@ -1,0 +1,108 @@
+@model VRTrackingApp.Data.Models.Standard
+@using VRTrackingApp.Data.Models
+@{
+    ViewData["Title"] = "Create Standard";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Create Standard</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="Dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index" asp-controller="Standard">Standards</a></li>
+        <li class="breadcrumb-item active">Create</li>
+    </ol>
+
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <a asp-action="Index" class="btn btn-outline-secondary">← Back to List</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-plus"></i> New Standard
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">Title *</label>
+                            <input asp-for="Title" class="form-control" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Description *</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="PolicyId" class="form-label">Policy *</label>
+                            <select asp-for="PolicyId" asp-items="(SelectList)ViewBag.PolicyId" class="form-select">
+                                <option value="">-- Select Policy --</option>
+                            </select>
+                            <span asp-validation-for="PolicyId" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="Version" class="form-label">Version *</label>
+                            <input asp-for="Version" class="form-control" type="number" min="1" />
+                            <span asp-validation-for="Version" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="EffectiveDate" class="form-label">Effective Date *</label>
+                            <input asp-for="EffectiveDate" class="form-control" type="date" />
+                            <span asp-validation-for="EffectiveDate" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="ReviewDate" class="form-label">Review Date *</label>
+                            <input asp-for="ReviewDate" class="form-control" type="date" />
+                            <span asp-validation-for="ReviewDate" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="OwnerUserId" class="form-label">Owner</label>
+                            <select asp-for="OwnerUserId" asp-items="(SelectList)ViewBag.OwnerUserId" class="form-select">
+                                <option value="">-- Select Owner --</option>
+                            </select>
+                            <span asp-validation-for="OwnerUserId" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="Status" class="form-label">Status *</label>
+                            <input asp-for="Status" class="form-control" list="statusList" />
+                            <datalist id="statusList">
+                                <option value="Draft"></option>
+                                <option value="Under Review"></option>
+                                <option value="Approved"></option>
+                                <option value="Archived"></option>
+                            </datalist>
+                            <span asp-validation-for="Status" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary me-2">Create</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

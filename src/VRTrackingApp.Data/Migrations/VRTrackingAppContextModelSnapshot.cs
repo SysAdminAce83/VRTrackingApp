@@ -22,6 +22,33 @@ namespace VRTrackingApp.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("VRTrackingApp.Data.Models.AppSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppSettings");
+                });
+
             modelBuilder.Entity("VRTrackingApp.Data.Models.Asset", b =>
                 {
                     b.Property<int>("Id")
@@ -434,6 +461,322 @@ namespace VRTrackingApp.Data.Migrations
                     b.ToTable("AuditLogs");
                 });
 
+            modelBuilder.Entity("VRTrackingApp.Data.Models.ComplianceControl", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ControlFamilyId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ControlFamilyId1")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ControlId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("Framework")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("FrameworkId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FrameworkVersion")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("Impact")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ControlFamilyId");
+
+                    b.HasIndex("ControlFamilyId1");
+
+                    b.HasIndex("ControlId");
+
+                    b.HasIndex("Framework");
+
+                    b.HasIndex("FrameworkId");
+
+                    b.ToTable("ComplianceControls");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.ComplianceReview", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ComplianceControlId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EvidenceRef")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("ExceptionExpiry")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsException")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Rationale")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedBy")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("ReviewerNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("VulnerabilityFindingId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComplianceControlId");
+
+                    b.HasIndex("VulnerabilityFindingId");
+
+                    b.ToTable("ComplianceReviews");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.ControlEvidence", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ComplianceControlId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("FileHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("FileName")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("FilePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<long?>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("FindingComplianceLinkId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UploadedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComplianceControlId");
+
+                    b.HasIndex("FindingComplianceLinkId");
+
+                    b.ToTable("ControlEvidences");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.ControlFamily", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("FamilyId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("FrameworkId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FamilyId");
+
+                    b.HasIndex("FrameworkId");
+
+                    b.ToTable("ControlFamilies");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.ControlLibrary", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ControlDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ControlId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ControlName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ControlOwner")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Domain")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Evidence")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Frequency")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Objective")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("RiskAddressed")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("TestSteps")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ControlId")
+                        .IsUnique();
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.ToTable("ControlLibraries", (string)null);
+                });
+
             modelBuilder.Entity("VRTrackingApp.Data.Models.DeduplicationLog", b =>
                 {
                     b.Property<int>("Id")
@@ -497,6 +840,58 @@ namespace VRTrackingApp.Data.Migrations
                     b.HasIndex("PluginId", "HostName", "Port", "Protocol");
 
                     b.ToTable("DeduplicationLogs");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.EvidenceAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("ControlEvidenceId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FileHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UploadedBy")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ControlEvidenceId");
+
+                    b.ToTable("EvidenceAttachments");
                 });
 
             modelBuilder.Entity("VRTrackingApp.Data.Models.ExceptionApprovalStep", b =>
@@ -895,6 +1290,100 @@ namespace VRTrackingApp.Data.Migrations
                     b.ToTable("ExceptionSecurityControls");
                 });
 
+            modelBuilder.Entity("VRTrackingApp.Data.Models.FindingComplianceLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ComplianceControlId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EvidenceRef")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Rationale")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("VulnerabilityFindingId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComplianceControlId");
+
+                    b.HasIndex("VulnerabilityFindingId");
+
+                    b.HasIndex("VulnerabilityFindingId", "ComplianceControlId")
+                        .IsUnique();
+
+                    b.ToTable("FindingComplianceLinks");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.Framework", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("ShortName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Version")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShortName")
+                        .IsUnique();
+
+                    b.ToTable("Frameworks");
+                });
+
             modelBuilder.Entity("VRTrackingApp.Data.Models.IngestionAudit", b =>
                 {
                     b.Property<int>("Id")
@@ -1014,6 +1503,154 @@ namespace VRTrackingApp.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.Policy", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("OwnerUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ReviewDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("OwnerUserId");
+
+                    b.HasIndex("Title");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.ToTable("Policies", (string)null);
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.Procedure", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("OwnerUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ReviewDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("StandardId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("OwnerUserId");
+
+                    b.HasIndex("StandardId");
+
+                    b.HasIndex("Title");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.ToTable("Procedures", (string)null);
                 });
 
             modelBuilder.Entity("VRTrackingApp.Data.Models.RemediationAction", b =>
@@ -1140,6 +1777,141 @@ namespace VRTrackingApp.Data.Migrations
                     b.HasIndex("VulnerabilityInstanceId");
 
                     b.ToTable("RemediationJobs");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.Risk", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BusinessImpact")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Likelihood")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<int?>("OwnerUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReviewDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RiskName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("RiskScore")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("OwnerUserId");
+
+                    b.HasIndex("RiskName")
+                        .IsUnique();
+
+                    b.HasIndex("UpdatedById");
+
+                    b.ToTable("Risks");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.RiskAcceptance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AcceptedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AcceptedBy")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("ApprovalNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<int>("ComplianceControlId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Justification")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("VulnerabilityFindingId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComplianceControlId");
+
+                    b.HasIndex("VulnerabilityFindingId");
+
+                    b.ToTable("RiskAcceptances");
                 });
 
             modelBuilder.Entity("VRTrackingApp.Data.Models.Role", b =>
@@ -1408,6 +2180,124 @@ namespace VRTrackingApp.Data.Migrations
                     b.ToTable("ScanUploads");
                 });
 
+            modelBuilder.Entity("VRTrackingApp.Data.Models.Standard", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("OwnerUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PolicyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ReviewDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("OwnerUserId");
+
+                    b.HasIndex("PolicyId");
+
+                    b.HasIndex("Title");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.ToTable("Standards", (string)null);
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.TicketingLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ExceptionRecordId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("LinkedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("LinkedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("System")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("TicketId")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<string>("TicketUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExceptionRecordId");
+
+                    b.HasIndex("LinkedByUserId");
+
+                    b.ToTable("TicketingLinks");
+                });
+
             modelBuilder.Entity("VRTrackingApp.Data.Models.UploadAuditTrail", b =>
                 {
                     b.Property<int>("Id")
@@ -1536,6 +2426,15 @@ namespace VRTrackingApp.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AffectedProducts")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CSAFId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CVRFId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1561,6 +2460,30 @@ namespace VRTrackingApp.Data.Migrations
                     b.Property<double?>("EpssScore")
                         .HasColumnType("float");
 
+                    b.Property<string>("ExploitabilityAssessment")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FAQUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("KBNumbers")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LastEnrichedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MicrosoftAdvisoryId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MicrosoftBulletinId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("MicrosoftReleaseDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PatchDownloadUrls")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("PluginId")
                         .HasColumnType("int");
 
@@ -1571,6 +2494,9 @@ namespace VRTrackingApp.Data.Migrations
 
                     b.Property<string>("References")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("RequiresReboot")
+                        .HasColumnType("bit");
 
                     b.Property<string>("RiskFactor")
                         .HasColumnType("nvarchar(max)");
@@ -1586,11 +2512,17 @@ namespace VRTrackingApp.Data.Migrations
                     b.Property<string>("StigSeverity")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("SupersededBy")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Synopsis")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<double?>("VprScore")
                         .HasColumnType("float");
+
+                    b.Property<string>("Workaround")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -1717,6 +2649,87 @@ namespace VRTrackingApp.Data.Migrations
                     b.Navigation("PerformedBy");
                 });
 
+            modelBuilder.Entity("VRTrackingApp.Data.Models.ComplianceControl", b =>
+                {
+                    b.HasOne("VRTrackingApp.Data.Models.ControlFamily", "ControlFamilyNavigation")
+                        .WithMany()
+                        .HasForeignKey("ControlFamilyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("VRTrackingApp.Data.Models.ControlFamily", null)
+                        .WithMany("Controls")
+                        .HasForeignKey("ControlFamilyId1");
+
+                    b.HasOne("VRTrackingApp.Data.Models.Framework", null)
+                        .WithMany("Controls")
+                        .HasForeignKey("FrameworkId");
+
+                    b.Navigation("ControlFamilyNavigation");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.ComplianceReview", b =>
+                {
+                    b.HasOne("VRTrackingApp.Data.Models.ComplianceControl", "Control")
+                        .WithMany()
+                        .HasForeignKey("ComplianceControlId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VRTrackingApp.Data.Models.VulnerabilityFinding", "Finding")
+                        .WithMany()
+                        .HasForeignKey("VulnerabilityFindingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Control");
+
+                    b.Navigation("Finding");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.ControlEvidence", b =>
+                {
+                    b.HasOne("VRTrackingApp.Data.Models.ComplianceControl", "Control")
+                        .WithMany("Evidence")
+                        .HasForeignKey("ComplianceControlId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VRTrackingApp.Data.Models.FindingComplianceLink", "FindingLink")
+                        .WithMany()
+                        .HasForeignKey("FindingComplianceLinkId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Control");
+
+                    b.Navigation("FindingLink");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.ControlFamily", b =>
+                {
+                    b.HasOne("VRTrackingApp.Data.Models.Framework", "Framework")
+                        .WithMany("ControlFamilies")
+                        .HasForeignKey("FrameworkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Framework");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.ControlLibrary", b =>
+                {
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById");
+
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("UpdatedBy");
+                });
+
             modelBuilder.Entity("VRTrackingApp.Data.Models.DeduplicationLog", b =>
                 {
                     b.HasOne("VRTrackingApp.Data.Models.ScanUpload", "ScanUpload")
@@ -1732,6 +2745,17 @@ namespace VRTrackingApp.Data.Migrations
                     b.Navigation("ScanUpload");
 
                     b.Navigation("VulnerabilityInstance");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.EvidenceAttachment", b =>
+                {
+                    b.HasOne("VRTrackingApp.Data.Models.ControlEvidence", "Evidence")
+                        .WithMany()
+                        .HasForeignKey("ControlEvidenceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Evidence");
                 });
 
             modelBuilder.Entity("VRTrackingApp.Data.Models.ExceptionApprovalStep", b =>
@@ -1859,6 +2883,25 @@ namespace VRTrackingApp.Data.Migrations
                     b.Navigation("ExceptionRecord");
                 });
 
+            modelBuilder.Entity("VRTrackingApp.Data.Models.FindingComplianceLink", b =>
+                {
+                    b.HasOne("VRTrackingApp.Data.Models.ComplianceControl", "Control")
+                        .WithMany("FindingLinks")
+                        .HasForeignKey("ComplianceControlId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VRTrackingApp.Data.Models.VulnerabilityFinding", "Finding")
+                        .WithMany()
+                        .HasForeignKey("VulnerabilityFindingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Control");
+
+                    b.Navigation("Finding");
+                });
+
             modelBuilder.Entity("VRTrackingApp.Data.Models.IngestionAudit", b =>
                 {
                     b.HasOne("VRTrackingApp.Data.Models.UserAccount", "PerformedBy")
@@ -1900,6 +2943,58 @@ namespace VRTrackingApp.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("VRTrackingApp.Data.Models.Policy", b =>
+                {
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById");
+
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Owner");
+
+                    b.Navigation("UpdatedBy");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.Procedure", b =>
+                {
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById");
+
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("VRTrackingApp.Data.Models.Standard", "Standard")
+                        .WithMany()
+                        .HasForeignKey("StandardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Owner");
+
+                    b.Navigation("Standard");
+
+                    b.Navigation("UpdatedBy");
+                });
+
             modelBuilder.Entity("VRTrackingApp.Data.Models.RemediationAction", b =>
                 {
                     b.HasOne("VRTrackingApp.Data.Models.UserAccount", "AssignedTo")
@@ -1939,6 +3034,47 @@ namespace VRTrackingApp.Data.Migrations
                     b.Navigation("RequestedBy");
 
                     b.Navigation("VulnerabilityInstance");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.Risk", b =>
+                {
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById");
+
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Owner");
+
+                    b.Navigation("UpdatedBy");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.RiskAcceptance", b =>
+                {
+                    b.HasOne("VRTrackingApp.Data.Models.ComplianceControl", "Control")
+                        .WithMany()
+                        .HasForeignKey("ComplianceControlId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VRTrackingApp.Data.Models.VulnerabilityFinding", "Finding")
+                        .WithMany()
+                        .HasForeignKey("VulnerabilityFindingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Control");
+
+                    b.Navigation("Finding");
                 });
 
             modelBuilder.Entity("VRTrackingApp.Data.Models.ScanIngestionLock", b =>
@@ -1989,6 +3125,54 @@ namespace VRTrackingApp.Data.Migrations
                     b.Navigation("ScanGroup");
 
                     b.Navigation("UploadedBy");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.Standard", b =>
+                {
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById");
+
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("VRTrackingApp.Data.Models.Policy", "Policy")
+                        .WithMany()
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Owner");
+
+                    b.Navigation("Policy");
+
+                    b.Navigation("UpdatedBy");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.TicketingLink", b =>
+                {
+                    b.HasOne("VRTrackingApp.Data.Models.ExceptionRecord", "ExceptionRecord")
+                        .WithMany("TicketingLinks")
+                        .HasForeignKey("ExceptionRecordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VRTrackingApp.Data.Models.UserAccount", "LinkedBy")
+                        .WithMany()
+                        .HasForeignKey("LinkedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ExceptionRecord");
+
+                    b.Navigation("LinkedBy");
                 });
 
             modelBuilder.Entity("VRTrackingApp.Data.Models.UploadAuditTrail", b =>
@@ -2075,6 +3259,18 @@ namespace VRTrackingApp.Data.Migrations
                     b.Navigation("Instances");
                 });
 
+            modelBuilder.Entity("VRTrackingApp.Data.Models.ComplianceControl", b =>
+                {
+                    b.Navigation("Evidence");
+
+                    b.Navigation("FindingLinks");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.ControlFamily", b =>
+                {
+                    b.Navigation("Controls");
+                });
+
             modelBuilder.Entity("VRTrackingApp.Data.Models.ExceptionRecord", b =>
                 {
                     b.Navigation("ApprovalSteps");
@@ -2089,7 +3285,16 @@ namespace VRTrackingApp.Data.Migrations
 
                     b.Navigation("SecurityControls");
 
+                    b.Navigation("TicketingLinks");
+
                     b.Navigation("VendorResponses");
+                });
+
+            modelBuilder.Entity("VRTrackingApp.Data.Models.Framework", b =>
+                {
+                    b.Navigation("ControlFamilies");
+
+                    b.Navigation("Controls");
                 });
 
             modelBuilder.Entity("VRTrackingApp.Data.Models.Role", b =>
